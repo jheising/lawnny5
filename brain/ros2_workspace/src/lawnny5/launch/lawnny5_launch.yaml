@@ -17,10 +17,10 @@ launch:
 #      pkg: "lawnny5"
 #      exec: "depth_ai_camera"
 #      output: "screen"
-  - node:
-      pkg: "lawnny5"
-      exec: "depth_ai_camera_uvc"
-      output: "screen"
+#  - node:
+#      pkg: "lawnny5"
+#      exec: "depth_ai_camera_uvc"
+#      output: "screen"
   - node:
       pkg: "lawnny5"
       exec: "sabertooth_mixed_controller"
