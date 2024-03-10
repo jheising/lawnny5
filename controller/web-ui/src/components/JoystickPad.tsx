@@ -63,6 +63,11 @@ export function JoystickPad(props: JoystickPadProps) {
 
     function handleJoystickEnd(event: EventData, data: JoystickOutputData) {
         endJoystickLatch();
+        joystickPosition.current = {
+            xPercent: 0,
+            yPercent: 0
+        };
+        sendCurrentJoystickPosition();
     }
 
     function handleJoystickMove(event: EventData, data: JoystickOutputData) {

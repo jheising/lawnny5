@@ -5,11 +5,12 @@ from std_msgs.msg import Bool
 from pysabertooth import Sabertooth
 import time
 
-FORWARD_MIXED = 0x08
-REVERSE_MIXED = 0x09
-RIGHT_MIXED = 0x0A
-LEFT_MIXED = 0x0B
+FORWARD_MIXED = 0x0A # 0x08
+REVERSE_MIXED = 0x0B # 0x09
+RIGHT_MIXED = 0x09 # 0x0A
+LEFT_MIXED = 0x08 # 0x0B
 SERIAL_TIMEOUT = 0x0E
+RAMPING = 0x10
 
 class SabertoothMixedController(Node):
 
@@ -67,6 +68,7 @@ class SabertoothMixedController(Node):
             return
 
         self.sabertooth_controller.sendCommand(SERIAL_TIMEOUT, 2)  # 2 = 200ms
+        self.sabertooth_controller.sendCommand(RAMPING, 27)
 
     def motor_command_callback(self, msg):
 
@@ -82,16 +84,17 @@ class SabertoothMixedController(Node):
         x_value = round(msg.x * 127)
         y_value = round(msg.y * 127)
 
-        # Set our forward and backward first
-        if y_value > 0:
-            self.sabertooth_controller.sendCommand(FORWARD_MIXED, abs(y_value))
-        else:
-            self.sabertooth_controller.sendCommand(REVERSE_MIXED, abs(y_value))
+        # self.get_logger().info('x:%d - y:%d' % (x_value, y_value))
 
         if x_value > 0:
             self.sabertooth_controller.sendCommand(RIGHT_MIXED, abs(x_value))
         else:
             self.sabertooth_controller.sendCommand(LEFT_MIXED, abs(x_value))
+
+        if y_value > 0:
+            self.sabertooth_controller.sendCommand(FORWARD_MIXED, abs(y_value))
+        else:
+            self.sabertooth_controller.sendCommand(REVERSE_MIXED, abs(y_value))
 
     def initialize_sabertooth(self, device, address):
         self.get_logger().info("Initializing Sabertooth motor controller:\ndevice: %s\naddress: %d" % (device, address))

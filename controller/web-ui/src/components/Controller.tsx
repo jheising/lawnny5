@@ -6,7 +6,6 @@ import { VideoDisplay } from "./VideoDisplay";
 
 const rosServer = "ws://lawnny5.local:9090";
 const JOYSTICK_SIZE = 200;
-const HALF_JOYSTICK_SIZE = JOYSTICK_SIZE / 2;
 
 export function Controller() {
     const ros = useROS({
