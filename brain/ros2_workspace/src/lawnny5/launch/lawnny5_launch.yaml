@@ -1,0 +1,32 @@
+launch:
+  - arg:
+      name: "sabertooth_serial_device"
+      default: "/dev/ttyS0"
+  - arg:
+      name: "sabertooth_controller_address"
+      default: "128"
+
+  - include:
+      file: "$(find-pkg-share rosbridge_server)/launch/rosbridge_websocket_launch.xml"
+
+  - node:
+      pkg: "lawnny5"
+      exec: "motor_control_multiplexer"
+      output: "screen"
+#  - node:
+#      pkg: "lawnny5"
+#      exec: "depth_ai_camera"
+#      output: "screen"
+  - node:
+      pkg: "lawnny5"
+      exec: "depth_ai_camera_uvc"
+      output: "screen"
+  - node:
+      pkg: "lawnny5"
+      exec: "sabertooth_mixed_controller"
+      output: "screen"
+      param:
+        - name: "sabertooth_serial_device"
+          value: "$(var sabertooth_serial_device)"
+        - name: "sabertooth_controller_address"
+          value: "$(var sabertooth_controller_address)"

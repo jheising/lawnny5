@@ -1,0 +1,1 @@
+`docker run --rm -it --name lawnny5-ros ros`
