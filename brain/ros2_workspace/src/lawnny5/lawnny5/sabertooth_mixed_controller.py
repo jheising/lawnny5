@@ -3,8 +3,8 @@ from rclpy.node import Node
 from geometry_msgs.msg import Point
 from std_msgs.msg import Bool
 from pysabertooth import Sabertooth
-import time
 
+# NOTE: these numbers seem to be backwards from what the documentation says they should be
 FORWARD_MIXED = 0x0A # 0x08
 REVERSE_MIXED = 0x0B # 0x09
 RIGHT_MIXED = 0x09 # 0x0A

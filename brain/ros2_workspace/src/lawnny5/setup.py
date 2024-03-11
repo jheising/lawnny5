@@ -27,6 +27,7 @@ setup(
             'sabertooth_mixed_controller = lawnny5.sabertooth_mixed_controller:main',
             'depth_ai_camera = lawnny5.depth_ai_camera:main',
             'depth_ai_camera_uvc = lawnny5.depth_ai_camera_uvc:main',
+            'web_control_ui = lawnny5.web_control_ui:main',
         ],
     },
 )

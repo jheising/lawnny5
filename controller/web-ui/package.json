@@ -1,12 +1,12 @@
 {
   "name": "lawnny-5-web-ui",
   "version": "1.0.0",
-  "main": "index.js",
   "author": "Jim Heising",
   "license": "MIT",
   "private": true,
   "scripts": {
-    "dev": "parcel ./src/index.html"
+    "dev": "parcel ./src/index.html",
+    "build": "rm -R ./dist && parcel build ./src/index.html"
   },
   "dependencies": {
     "react": "^18.2.0",

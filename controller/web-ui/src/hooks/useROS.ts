@@ -24,6 +24,8 @@ export function useROS(props: UseROSProps): UseROSDispatch {
             ros.current = undefined;
         }
 
+        setLastError(undefined);
+
         if (props.enabled && props.rosURL) {
             ros.current = new ROSLIB.Ros({
                 url: props.rosURL

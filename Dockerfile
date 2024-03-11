@@ -13,12 +13,17 @@ RUN mkdir -p /root/ros2_ws/src
 ## Make sure ROS is always setup when loading our shell
 RUN echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc
 
-# ADD ../ros2_workspace /root/ros2_ws/
+# Copy our ROS package source code
+COPY brain/ros2_workspace/src /root/ros2_ws/src
 
+# Copy our web controller
+COPY controller/web-ui/dist /root/ros2_ws/www
+
+ENV LAWNNY5_ROOT="/root/ros2_ws"
 WORKDIR /root/ros2_ws
 
-# RUN colcon build
-
-#CMD ros2 launch lawnny5 lawnny5_launch.yaml
+RUN colcon build && rm -R src && rm -R log
 
 # colcon build && source install/local_setup.bash && ros2 launch lawnny5 lawnny5_launch.yaml
+
+CMD . /opt/ros/iron/setup.sh && . install/local_setup.sh && ros2 launch lawnny5 lawnny5_launch.yaml
