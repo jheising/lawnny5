@@ -43,6 +43,10 @@ export function JoystickPad(props: JoystickPadProps) {
 
     function handleJoystickEnd(event: EventData, data: JoystickOutputData) {
         isJoystickActive.current = false;
+        joystickState.updateValue({
+            xPercent: 0,
+            yPercent: 0
+        });
     }
 
     function handleJoystickMove(event: EventData, data: JoystickOutputData) {

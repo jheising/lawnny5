@@ -1,12 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import equal from "fast-deep-equal";
 import { useStateCallback } from "./useStateCallback";
 import { JoystickPosition } from "../components/JoystickPad";
-
-export interface GamepadInfo {
-    readonly axes: ReadonlyArray<number>;
-    readonly buttons: ReadonlyArray<boolean>;
-}
 
 export interface UseGamepadDispatch {
     connected: boolean;
@@ -15,7 +9,6 @@ export interface UseGamepadDispatch {
 
 export interface UseGamepadProps {
     enableLatching?: boolean;
-    onInputChanged?: (info?: GamepadInfo) => void;
     onJoystickPosition?: (position?: JoystickPosition) => void;
     deadZone?: number;
 }
@@ -33,12 +26,12 @@ export function useGamepad(props?: UseGamepadProps): UseGamepadDispatch {
     const [gamepad, setGamepad] = useState<Gamepad>();
     const gamepadIndex = useRef<number>();
     const propsRef = useRef(props);
-    const gamepadInfo = useStateCallback<GamepadInfo>({
+    const joystickState = useStateCallback<ReadonlyArray<number>>({
         onValueChanged: (value) => {
             if (propsRef.current?.onJoystickPosition) {
                 propsRef.current.onJoystickPosition({
-                    xPercent: value?.axes[2] ?? 0,
-                    yPercent: -(value?.axes[3] ?? 0)
+                    xPercent: value?.[2] ?? 0,
+                    yPercent: -(value?.[3] ?? 0)
                 });
             }
         },
@@ -47,14 +40,9 @@ export function useGamepad(props?: UseGamepadProps): UseGamepadDispatch {
                 return false;
             }
 
-            // Are any buttons pressed?
-            // if (value.buttons.some(button => button)) {
-            //     return true;
-            // }
-
             // Are any axes greater than our deadzone?
             const deadZone = propsRef.current?.deadZone ?? 0.009;
-            if (value.axes.some(axes => Math.abs(axes) > deadZone)) {
+            if (value.some(axis => Math.abs(axis) > deadZone)) {
                 return true;
             }
 
@@ -108,10 +96,7 @@ export function useGamepad(props?: UseGamepadProps): UseGamepadDispatch {
             return;
         }
 
-        gamepadInfo.updateValue({
-            axes: gamepad.axes,
-            buttons: convertButtonsToArray(gamepad.buttons)
-        });
+        joystickState.updateValue(gamepad.axes);
 
         setTimeout(pollingLoop);
     }
