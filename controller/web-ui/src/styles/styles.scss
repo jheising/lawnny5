@@ -8,7 +8,7 @@
 }
 
 html, body {
-  @apply min-h-screen text-gray-300;
+  @apply text-gray-300;
 }
 
 .font-lcd {
@@ -35,8 +35,4 @@ html, body {
                   theme('colors.rose.600') 10px,
                   theme('colors.rose.600') 20px
   );
-
-  &:active {
-    background:  theme('colors.rose.600');
-  }
 }
