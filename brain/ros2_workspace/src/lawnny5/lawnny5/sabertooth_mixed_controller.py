@@ -67,7 +67,7 @@ class SabertoothMixedController(Node):
         if self.e_stop or not self.sabertooth_controller:
             return
 
-        self.sabertooth_controller.sendCommand(SERIAL_TIMEOUT, 2)  # 2 = 200ms
+        self.sabertooth_controller.sendCommand(SERIAL_TIMEOUT, 3)  # 3 = 300ms
         self.sabertooth_controller.sendCommand(RAMPING, 27)
 
     def motor_command_callback(self, msg):
