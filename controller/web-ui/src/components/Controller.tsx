@@ -31,6 +31,7 @@ export function Controller() {
     useEffect(() => {
         // Automatically connect to the ROS server running on this device when the page loads
         setROSURL(`ws://${document.location.hostname}:${DEFAULT_ROS_PORT}`);
+        window.scrollTo(0, 1);
     }, []);
 
     useEffect(() => {
