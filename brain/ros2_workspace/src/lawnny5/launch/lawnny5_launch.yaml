@@ -25,12 +25,12 @@ launch:
 #      pkg: "lawnny5"
 #      exec: "depth_ai_camera_uvc"
 #      output: "screen"
-#  - node:
-#      pkg: "lawnny5"
-#      exec: "sabertooth_mixed_controller"
-#      output: "screen"
-#      param:
-#        - name: "sabertooth_serial_device"
-#          value: "$(var sabertooth_serial_device)"
-#        - name: "sabertooth_controller_address"
-#          value: "$(var sabertooth_controller_address)"
+  - node:
+      pkg: "lawnny5"
+      exec: "sabertooth_mixed_controller"
+      output: "screen"
+      param:
+        - name: "sabertooth_serial_device"
+          value: "$(var sabertooth_serial_device)"
+        - name: "sabertooth_controller_address"
+          value: "$(var sabertooth_controller_address)"
