@@ -4,7 +4,7 @@ import { Message, Topic } from "roslib";
 import { JoystickPad, JoystickPosition } from "./JoystickPad";
 import { PowerButton } from "./PowerButton";
 import { DotMatrixScreen } from "./DotMatrixScreen";
-import { Button, Chip } from "ui-neumorphism";
+import { Button, Card, Chip } from "ui-neumorphism";
 import { useGamepad } from "../hooks/useGamepad";
 
 const DEFAULT_ROS_PORT = 9090;
@@ -18,6 +18,7 @@ export function Controller() {
     const [displayMessageIsError, setDisplayMessageIsError] = useState(false);
     const joystickPublisher = useRef<Topic>();
     const eStopPublisher = useRef<Topic>();
+    const [joystickPosition, setJoystickPosition] = useState<JoystickPosition>();
     const gamepad = useGamepad({
         onJoystickPosition: handleJoystickPosition
     });
@@ -30,9 +31,6 @@ export function Controller() {
     useEffect(() => {
         // Automatically connect to the ROS server running on this device when the page loads
         setROSURL(`ws://${document.location.hostname}:${DEFAULT_ROS_PORT}`);
-
-        // // Remove the window from IOS
-        // window.scrollTo(0, 1);
     }, []);
 
     useEffect(() => {
@@ -90,11 +88,16 @@ export function Controller() {
                 buttons: []
             }));
         }
+
+        setJoystickPosition(position);
     }
 
     function togglePowerOn() {
         setPowerOn(!powerOn);
     }
+
+    const joystickX = (joystickPosition?.xPercent ?? 0);
+    const joystickY = (joystickPosition?.yPercent ?? 0);
 
     return <div className="relative h-[calc(100dvh)] max-h-[480px] w-full bg-[#444444] flex flex-row">
         <div className="flex-1 flex flex-col">
@@ -116,18 +119,28 @@ export function Controller() {
                     Gamepad
                 </Chip>}
             </div>
-            {/*<div className="w-4 h-4 border-sky-200 shadow-[0_0_2px_#fff,inset_0_0_2px_#fff,0_0_5px_#08f,0_0_15px_#08f,0_0_30px_#08f] bg-sky-200 rounded-full"/>*/}
-            {/*{!!ros.ros && <VideoDisplay ros={ros.ros} className="object-contain w-full h-full rounded-xl"/>}*/}
-            {/*<button className="bg-red-500 hover:bg-red-400 w-60 h-60 text-white text-4xl font-bold py-2 px-4 border-b-4 border-red-700 hover:border-red-500 rounded-full"*/}
-            {/*        onClick={handleEStopButton}>*/}
-            {/*    STOP*/}
-            {/*</button>*/}
         </div>
         <div className="h-full w-1/3 p-4 flex flex-col gap-2">
-            <div className="flex-1 relative">
-                <JoystickPad size={JOYSTICK_SIZE} onJoystickPosition={handleJoystickPosition} />
+            <div className="flex-1 relative flex flex-col gap-2">
+                <div className="flex-1 flex flex-row gap-2">
+                    <div className="flex-1"><JoystickPad size={JOYSTICK_SIZE} onJoystickPosition={handleJoystickPosition} /></div>
+                    <Card dark inset className="!h-full !w-1 relative overflow-hidden">
+                        <div className="absolute w-full bg-sky-400 rounded-full" style={{
+                            height: `${Math.abs(joystickY) * 50}%`,
+                            bottom: joystickY > 0 ? "50%" : undefined,
+                            top: joystickY > 0 ? undefined : "50%"
+                        }} />
+                    </Card>
+                </div>
+                <Card dark inset className="w-full h-1 relative overflow-hidden mr-4">
+                    <div className="absolute h-full bg-sky-400 rounded-full" style={{
+                        width: `${Math.abs(joystickX) * 50}%`,
+                        left: joystickX > 0 ? "50%" : undefined,
+                        right: joystickX > 0 ? undefined : "50%"
+                    }} />
+                </Card>
             </div>
-            <Button dark size="large" className="!h-1/5 relative overflow-hidden" onClick={handleEStopButton}>
+            <Button dark bordered size="large" className="!h-1/5 relative overflow-hidden" onClick={handleEStopButton}>
                 <div className="absolute left-2 rounded top-2 right-2 bottom-2 font-light text-rose-200 emergency-stripes flex items-center justify-center">
                     <svg
                         fill="currentColor"
