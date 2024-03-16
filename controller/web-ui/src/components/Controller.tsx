@@ -116,13 +116,15 @@ export function Controller() {
         const xPercentExpo = MathUtils.expoFunction(position?.xPercent ?? 0, settings.xExpo);
         const yPercentExpo = MathUtils.expoFunction(position?.yPercent ?? 0, settings.yExpo);
 
-        if (position && joystickPublisher.current) {
+        // Send joystick position to ROS
+        if (joystickPublisher.current) {
             joystickPublisher.current.publish(new Message({
                 axes: [xPercentExpo, settings.direction === 2 ? -yPercentExpo : yPercentExpo],
                 buttons: []
             }));
         }
 
+        // Update the UI
         setJoystickPosition({
             xPercent: xPercentExpo,
             yPercent: yPercentExpo
