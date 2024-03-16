@@ -4,11 +4,15 @@ import { Message, Topic } from "roslib";
 import { JoystickPad, JoystickPosition } from "./JoystickPad";
 import { PowerButton } from "./PowerButton";
 import { DotMatrixScreen } from "./DotMatrixScreen";
-import { Button, Card, Chip } from "ui-neumorphism";
+import { Button, Card, Chip, Switch } from "ui-neumorphism";
 import { useGamepad } from "../hooks/useGamepad";
 
 const DEFAULT_ROS_PORT = 9090;
 const JOYSTICK_SIZE = 200;
+
+export interface ControllerSettings {
+    direction: 1 | 2;
+}
 
 export function Controller() {
     const [rosURL, setROSURL] = useState<string>();
@@ -19,8 +23,12 @@ export function Controller() {
     const joystickPublisher = useRef<Topic>();
     const eStopPublisher = useRef<Topic>();
     const [joystickPosition, setJoystickPosition] = useState<JoystickPosition>();
+    const [settings, setSettings] = useState<ControllerSettings>({
+        direction: 1
+    });
+
     const gamepad = useGamepad({
-        onJoystickPosition: handleJoystickPosition
+        onJoystickPosition: handleJoystickPositionChanged
     });
 
     const ros = useROS({
@@ -32,7 +40,24 @@ export function Controller() {
         // Automatically connect to the ROS server running on this device when the page loads
         setROSURL(`ws://${document.location.hostname}:${DEFAULT_ROS_PORT}`);
         window.scrollTo(0, 1);
+
+        loadSettings();
     }, []);
+
+    function loadSettings() {
+        const savedSettings: ControllerSettings = JSON.parse(localStorage.getItem("settings") ?? "{}");
+        updateSettings(savedSettings);
+    }
+
+    function updateSettings(newSettings: Partial<ControllerSettings>) {
+        const fullSettings = {
+            ...settings,
+            ...newSettings
+        };
+
+        setSettings(fullSettings);
+        localStorage.setItem("settings", JSON.stringify(fullSettings));
+    }
 
     useEffect(() => {
 
@@ -73,6 +98,15 @@ export function Controller() {
         }
     }, [ros.isConnected]);
 
+    function updateROSJoystickPosition(position?: JoystickPosition) {
+        if (position && joystickPublisher.current) {
+            joystickPublisher.current.publish(new Message({
+                axes: [position.xPercent, settings.direction === 2 ? -position.yPercent : position.yPercent],
+                buttons: []
+            }));
+        }
+    }
+
     function handleEStopButton() {
         if (eStopPublisher.current) {
             eStopPublisher.current.publish(new Message({
@@ -82,19 +116,19 @@ export function Controller() {
         }
     }
 
-    function handleJoystickPosition(position?: JoystickPosition) {
-        if (position && joystickPublisher.current) {
-            joystickPublisher.current.publish(new Message({
-                axes: [position.xPercent, position.yPercent],
-                buttons: []
-            }));
-        }
-
+    function handleJoystickPositionChanged(position?: JoystickPosition) {
+        updateROSJoystickPosition(position);
         setJoystickPosition(position);
     }
 
     function togglePowerOn() {
         setPowerOn(!powerOn);
+    }
+
+    function handleDirectionChange({ checked }: { checked: boolean }) {
+        updateSettings({
+            direction: checked ? 2 : 1
+        });
     }
 
     const joystickX = (joystickPosition?.xPercent ?? 0);
@@ -106,7 +140,9 @@ export function Controller() {
                 <PowerButton on={powerOn} onClick={togglePowerOn} />
                 <div className="flex-1"><DotMatrixScreen text={displayMessage} isError={displayMessageIsError} /></div>
             </div>
-            <div className="flex-1"></div>
+            <div className="flex-1 px-4 flex items-center">
+                <Switch dark bordered size="large" label={settings.direction === 2 ? "Reverse Direction" : "Forward Direction"} checked={settings.direction === 2} onChange={handleDirectionChange} />
+            </div>
             <div className="p-4">
                 {gamepad.connected && <Chip dark key="4" type="info" className="ma-3">
                     <svg
@@ -124,7 +160,7 @@ export function Controller() {
         <div className="h-full w-1/3 p-4 flex flex-col gap-2">
             <div className="flex-1 relative flex flex-col gap-2">
                 <div className="flex-1 flex flex-row gap-2">
-                    <div className="flex-1"><JoystickPad size={JOYSTICK_SIZE} onJoystickPosition={handleJoystickPosition} /></div>
+                    <div className="flex-1"><JoystickPad size={JOYSTICK_SIZE} onJoystickPosition={handleJoystickPositionChanged} /></div>
                     <Card dark inset className="!h-full !w-1 relative overflow-hidden">
                         <div className="absolute w-full bg-sky-400 rounded-full" style={{
                             height: `${Math.abs(joystickY) * 50}%`,
