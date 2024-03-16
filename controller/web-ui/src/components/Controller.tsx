@@ -1,17 +1,20 @@
 import { useROS } from "../hooks/useROS";
-import { useEffect, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { Message, Topic } from "roslib";
 import { JoystickPad, JoystickPosition } from "./JoystickPad";
 import { PowerButton } from "./PowerButton";
 import { DotMatrixScreen } from "./DotMatrixScreen";
 import { Button, Card, Chip, Switch } from "ui-neumorphism";
 import { useGamepad } from "../hooks/useGamepad";
+import { MathUtils } from "../utils/MathUtils";
 
 const DEFAULT_ROS_PORT = 9090;
 const JOYSTICK_SIZE = 200;
 
 export interface ControllerSettings {
     direction: 1 | 2;
+    xExpo: number;
+    yExpo: number;
 }
 
 export function Controller() {
@@ -24,7 +27,9 @@ export function Controller() {
     const eStopPublisher = useRef<Topic>();
     const [joystickPosition, setJoystickPosition] = useState<JoystickPosition>();
     const [settings, setSettings] = useState<ControllerSettings>({
-        direction: 1
+        direction: 1,
+        xExpo: 0,
+        yExpo: 0
     });
 
     const gamepad = useGamepad({
@@ -98,15 +103,6 @@ export function Controller() {
         }
     }, [ros.isConnected]);
 
-    function updateROSJoystickPosition(position?: JoystickPosition) {
-        if (position && joystickPublisher.current) {
-            joystickPublisher.current.publish(new Message({
-                axes: [position.xPercent, settings.direction === 2 ? -position.yPercent : position.yPercent],
-                buttons: []
-            }));
-        }
-    }
-
     function handleEStopButton() {
         if (eStopPublisher.current) {
             eStopPublisher.current.publish(new Message({
@@ -117,8 +113,20 @@ export function Controller() {
     }
 
     function handleJoystickPositionChanged(position?: JoystickPosition) {
-        updateROSJoystickPosition(position);
-        setJoystickPosition(position);
+        const xPercentExpo = MathUtils.expoFunction(position?.xPercent ?? 0, settings.xExpo);
+        const yPercentExpo = MathUtils.expoFunction(position?.yPercent ?? 0, settings.yExpo);
+
+        if (position && joystickPublisher.current) {
+            joystickPublisher.current.publish(new Message({
+                axes: [xPercentExpo, settings.direction === 2 ? -yPercentExpo : yPercentExpo],
+                buttons: []
+            }));
+        }
+
+        setJoystickPosition({
+            xPercent: xPercentExpo,
+            yPercent: yPercentExpo
+        });
     }
 
     function togglePowerOn() {
@@ -131,6 +139,18 @@ export function Controller() {
         });
     }
 
+    function handleXExpoChange(event: ChangeEvent<HTMLInputElement>) {
+        updateSettings({
+            xExpo: event.target.valueAsNumber
+        });
+    }
+
+    function handleYExpoChange(event: ChangeEvent<HTMLInputElement>) {
+        updateSettings({
+            yExpo: event.target.valueAsNumber
+        });
+    }
+
     const joystickX = (joystickPosition?.xPercent ?? 0);
     const joystickY = (joystickPosition?.yPercent ?? 0);
 
@@ -140,8 +160,10 @@ export function Controller() {
                 <PowerButton on={powerOn} onClick={togglePowerOn} />
                 <div className="flex-1"><DotMatrixScreen text={displayMessage} isError={displayMessageIsError} /></div>
             </div>
-            <div className="flex-1 px-4 flex items-center">
-                <Switch dark bordered size="large" label={settings.direction === 2 ? "Reverse Direction" : "Forward Direction"} checked={settings.direction === 2} onChange={handleDirectionChange} />
+            <div className="flex-1 px-4 flex flex-col justify-center gap-4">
+                <div><Switch dark bordered size="large" label={settings.direction === 2 ? "Reverse Direction" : "Forward Direction"} checked={settings.direction === 2} onChange={handleDirectionChange} /></div>
+                <div className="flex items-center gap-4"><input type="range" min="0" max="1" value={settings.xExpo} className="w-1/2" step={0.05} onChange={handleXExpoChange} /> X Expo</div>
+                <div className="flex items-center gap-4"><input type="range" min="0" max="1" value={settings.yExpo} className="w-1/2" step={0.05} onChange={handleYExpoChange} /> Y Expo</div>
             </div>
             <div className="p-4">
                 {gamepad.connected && <Chip dark key="4" type="info" className="ma-3">
