@@ -184,7 +184,7 @@ export function Controller() {
         <div className="h-full w-1/3 p-4 flex flex-col gap-2">
             <div className="flex-1 relative flex flex-col gap-2">
                 <div className="flex-1 flex flex-row gap-2">
-                    <div className="flex-1"><JoystickPad size={JOYSTICK_SIZE} onJoystickPosition={handleJoystickPositionChanged} /></div>
+                    <div className="flex-1 select-none"><JoystickPad size={JOYSTICK_SIZE} onJoystickPosition={handleJoystickPositionChanged} /></div>
                     <Card dark inset className="!h-full !w-1 relative overflow-hidden">
                         <div className="absolute w-full bg-sky-400 rounded-full" style={{
                             height: `${Math.abs(joystickY) * 50}%`,

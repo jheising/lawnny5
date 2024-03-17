@@ -23,6 +23,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'global_settings_server = lawnny5.global_settings_server:main',
             'motor_control_multiplexer = lawnny5.motor_control_multiplexer:main',
             'sabertooth_mixed_controller = lawnny5.sabertooth_mixed_controller:main',
             'depth_ai_camera = lawnny5.depth_ai_camera:main',

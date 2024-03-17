@@ -11,6 +11,10 @@ launch:
 
   - node:
       pkg: "lawnny5"
+      exec: "global_settings_server"
+      output: "screen"
+  - node:
+      pkg: "lawnny5"
       exec: "motor_control_multiplexer"
       output: "screen"
   - node:

@@ -63,8 +63,8 @@ export function JoystickPad(props: JoystickPadProps) {
         });
     }
 
-    return <Card dark inset className="w-full h-full relative" bordered ref={joystickContainerRef}>
-        <div className="absolute size-full flex justify-center items-center">
+    return <Card dark inset className="w-full h-full relative select-none" bordered ref={joystickContainerRef}>
+        <div className="absolute size-full flex justify-center items-center select-none">
             <svg
                 fill="currentColor"
                 viewBox="0 0 16 16"
@@ -77,6 +77,7 @@ export function JoystickPad(props: JoystickPadProps) {
             </svg>
         </div>
         <Nipple options={{ size: props.size }} style={{ width: "100%", height: "100%" }}
+                className="select-none"
                 onStart={handleJoystickStart}
                 onEnd={handleJoystickEnd}
                 onMove={handleJoystickMove} />
