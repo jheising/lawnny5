@@ -36,10 +36,11 @@ class MotorControlMultiplexer(Node):
     def process_joystick_msg(self, twist_msg):
         # The joystick has moved, let's move to override mode
         self.joystick_override = True
-        self.get_logger().info("joy: %s" % twist_msg)
+        #self.get_logger().info("joy: %s" % twist_msg)
+        # self.process_twist_msg(twist_msg)
 
     def process_cmd_vel_msg(self, twist_msg):
-        self.get_logger().info("cmd_vel: %s" % twist_msg)
+        # self.get_logger().info("cmd_vel: %s" % twist_msg)
         # If the joystick has taken command, don't process cmd_vel messages
         # if self.joystick_override:
         #     return

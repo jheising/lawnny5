@@ -1,8 +1,9 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Development" type="docker-deploy" factoryName="dockerfile" server-name="Docker">
+  <configuration default="false" name="Simulator" type="docker-deploy" factoryName="dockerfile" server-name="Docker">
     <deployment type="dockerfile">
       <settings>
-        <option name="containerName" value="lawnny5-ros" />
+        <option name="buildCliOptions" value="--platform linux/amd64" />
+        <option name="containerName" value="lawnny5-ros-sim" />
         <option name="portBindings">
           <list>
             <DockerPortBindingImpl>
@@ -15,9 +16,9 @@
             </DockerPortBindingImpl>
           </list>
         </option>
-        <option name="commandLineOptions" value="--rm" />
+        <option name="commandLineOptions" value="--rm --platform linux/amd64" />
         <option name="showCommandPreview" value="true" />
-        <option name="sourceFilePath" value="Dockerfile" />
+        <option name="sourceFilePath" value="Sim.Dockerfile" />
         <option name="volumeBindings">
           <list>
             <DockerVolumeBindingImpl>

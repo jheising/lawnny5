@@ -9,20 +9,20 @@ launch:
   - include:
       file: "$(find-pkg-share rosbridge_server)/launch/rosbridge_websocket_launch.xml"
 
-#  - node:
-#      pkg: "teleop_twist_joy"
-#      exec: "teleop_node"
-#      param:
-#        - name: "require_enable_button"
-#          value: false
-#        - name: "axis_linear.x"
-#          value: 1
-#        - name: "scale_linear.x"
-#          value: 1.4
-#        - name: "axis_angular.yaw"
-#          value: 0
-#        - name: "scale_angular.yaw"
-#          value: 4.09
+  - node:
+      pkg: "teleop_twist_joy"
+      exec: "teleop_node"
+      param:
+        - name: "require_enable_button"
+          value: false
+        - name: "axis_linear.x"
+          value: 1
+        - name: "scale_linear.x"
+          value: 1.4
+        - name: "axis_angular.yaw"
+          value: 0
+        - name: "scale_angular.yaw"
+          value: 4.09
   - node:
       pkg: "lawnny5"
       exec: "global_settings_server"

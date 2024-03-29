@@ -2,3 +2,4 @@ controller/**/*
 .idea
 .git
 **/*/.git
+/brain/ros2_workspace/webots/

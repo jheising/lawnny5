@@ -4,7 +4,7 @@ FROM ros:iron
 # RUN curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash
 
 RUN sudo apt-get update -y && sudo apt-get upgrade -y -f
-RUN sudo apt-get install -y -f ros-iron-rosbridge-suite python3-colcon-common-extensions python3-pip
+RUN sudo apt-get install -y -f ros-iron-rosbridge-suite python3-colcon-common-extensions ros-iron-teleop-twist-joy python3-pip
 
 RUN python3 -m pip install pysabertooth depthai
 
@@ -19,7 +19,7 @@ RUN echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc
 # Copy our web controller
 # COPY controller/web-ui/dist /root/ros2_ws/www
 
-ENV LAWNNY5_ROOT="/root/ros2_ws"
+ENV LAWNNY5_ROOT="/root/ros2_ws/src"
 WORKDIR /root/ros2_ws
 
 # RUN colcon build
