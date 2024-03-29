@@ -237,4 +237,7 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-!/controller/web-ui/dist/
+/controller/web-ui/dist/
+/brain/ros2_workspace/log/
+/brain/ros2_workspace/install/
+/brain/ros2_workspace/build/

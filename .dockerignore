@@ -1,0 +1,4 @@
+controller/**/*
+.idea
+.git
+**/*/.git

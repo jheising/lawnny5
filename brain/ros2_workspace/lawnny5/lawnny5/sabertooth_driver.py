@@ -4,18 +4,23 @@ from geometry_msgs.msg import Point
 from std_msgs.msg import Bool
 from pysabertooth import Sabertooth
 
-# NOTE: these numbers seem to be backwards from what the documentation says they should be
-FORWARD_MIXED = 0x0A # 0x08
-REVERSE_MIXED = 0x0B # 0x09
-RIGHT_MIXED = 0x09 # 0x0A
-LEFT_MIXED = 0x08 # 0x0B
 SERIAL_TIMEOUT = 0x0E
 RAMPING = 0x10
+MOTOR_1_FWD = 0x00
+MOTOR_1_REV = 0x01
+MOTOR_2_FWD = 0x04
+MOTOR_2_REV = 0x05
 
-class SabertoothMixedController(Node):
+WHEEL_RADIUS = 0.095  # radius of wheels (meters)
+WHEEL_SEPARATION = 0.69  # width of the robot (meters)
+
+def map_val(x, in_min, in_max, out_min, out_max):
+    return min(out_max, max(out_min, (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min))
+
+class SabertoothController(Node):
 
     def __init__(self):
-        super().__init__('sabertooth_mixed_controller')
+        super().__init__('sabertooth_controller')
 
         self.e_stop = False
         self.sabertooth_controller = None
@@ -24,17 +29,17 @@ class SabertoothMixedController(Node):
         self.declare_parameter('sabertooth_serial_device', '/dev/ttyS0')
         self.declare_parameter('sabertooth_controller_address', 128)
 
-        self.subscription = self.create_subscription(
+        self.create_subscription(
             Bool,
             'cmd_estop',
             self.estop_command_callback,
-            10)
+            1)
 
-        self.subscription = self.create_subscription(
+        self.create_subscription(
             Point,
-            'cmd_sabertooth_mixed',
+            'cmd_motor',
             self.motor_command_callback,
-            10)
+            1)
 
     def start(self):
         self.initialize_sabertooth(
@@ -70,7 +75,7 @@ class SabertoothMixedController(Node):
         self.sabertooth_controller.sendCommand(SERIAL_TIMEOUT, 3)  # 3 = 300ms
         self.sabertooth_controller.sendCommand(RAMPING, 27)
 
-    def motor_command_callback(self, msg):
+    def motor_command_callback(self, twist_msg):
 
         if not self.sabertooth_controller:
             return
@@ -80,21 +85,25 @@ class SabertoothMixedController(Node):
             self.get_logger().info('Cannot process motor command because of EMERGENCY STOP')
             return
 
-        # Convert our percentage values to 0 - 127
-        x_value = round(msg.x * 127)
-        y_value = round(msg.y * 127)
+        # read linear and angular velocities from twist message
+        lin_speed = twist_msg.linear.x
+        ang_speed = twist_msg.angular.z
 
-        # self.get_logger().info('x:%d - y:%d' % (x_value, y_value))
+        # convert linear and angular inputs to left and right wheel velocities
+        motor1 = ((2 * lin_speed) - (ang_speed * self.WHEEL_SEPARATION)) / (
+                2.0 * self.WHEEL_RADIUS
+        )
 
-        if x_value > 0:
-            self.sabertooth_controller.sendCommand(RIGHT_MIXED, abs(x_value))
-        else:
-            self.sabertooth_controller.sendCommand(LEFT_MIXED, abs(x_value))
+        motor2 = ((2 * lin_speed) + (ang_speed * self.WHEEL_SEPARATION)) / (
+                2.0 * self.WHEEL_RADIUS
+        )
 
-        if y_value > 0:
-            self.sabertooth_controller.sendCommand(FORWARD_MIXED, abs(y_value))
-        else:
-            self.sabertooth_controller.sendCommand(REVERSE_MIXED, abs(y_value))
+        # map values obtained above between [-70 , 70] out of [-100,100]
+        motor1 = map_val(motor1, -14.736, 14.736, -100.0, 100.0)
+        motor2 = map_val(motor2, -14.736, 14.736, -100.0, 100.0)
+
+        self.sabertooth_controller.drive(1, motor1)
+        self.sabertooth_controller.drive(2, motor2)
 
     def initialize_sabertooth(self, device, address):
         self.get_logger().info("Initializing Sabertooth motor controller:\ndevice: %s\naddress: %d" % (device, address))
@@ -109,7 +118,7 @@ class SabertoothMixedController(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    sabertooth_controller = SabertoothMixedController()
+    sabertooth_controller = SabertoothController()
 
     sabertooth_controller.start()
     rclpy.spin(sabertooth_controller)

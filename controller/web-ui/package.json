@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "dev": "parcel ./src/index.html",
-    "build": "rm -Rf ./dist && parcel build ./src/index.html"
+    "build": "rm -Rf ../../brain/ros2_workspace/www && mkdir -p ../../brain/ros2_workspace/www && parcel build ./src/index.html --dist-dir ../../brain/ros2_workspace/www"
   },
   "dependencies": {
     "fast-deep-equal": "^3.1.3",

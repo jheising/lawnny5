@@ -1,8 +1,9 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Dockerfile: Compose Deployment" type="docker-deploy" factoryName="dockerfile" server-name="Docker">
+  <configuration default="false" name="Development" type="docker-deploy" factoryName="dockerfile" server-name="Docker">
     <deployment type="dockerfile">
       <settings>
         <option name="imageTag" value="lawnny5-ros" />
+        <option name="buildCliOptions" value="--platform linux/arm64/v8" />
         <option name="containerName" value="lawnny5-ros" />
         <option name="portBindings">
           <list>
@@ -16,7 +17,7 @@
             </DockerPortBindingImpl>
           </list>
         </option>
-        <option name="commandLineOptions" value="--rm" />
+        <option name="commandLineOptions" value="--rm --platform linux/arm64/v8" />
         <option name="showCommandPreview" value="true" />
         <option name="sourceFilePath" value="Dockerfile" />
         <option name="volumeBindings">

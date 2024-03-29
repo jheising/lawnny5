@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<robot name="Lawnny5">
+    <webots>
+        <plugin type="lawnny5.webots_driver.WebotsDriver" />
+    </webots>
+</robot>

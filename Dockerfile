@@ -19,7 +19,7 @@ RUN echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc
 # Copy our web controller
 # COPY controller/web-ui/dist /root/ros2_ws/www
 
-#ENV LAWNNY5_ROOT="/root/ros2_ws"
+ENV LAWNNY5_ROOT="/root/ros2_ws"
 WORKDIR /root/ros2_ws
 
 # RUN colcon build

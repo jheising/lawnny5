@@ -29,3 +29,7 @@ sudo nmcli device wifi hotspot ssid lawnny5 password NeedMowInput ifname wlan0
 
 ### Stop
 sudo nmcli device disconnect wlan0 && sudo nmcli device up wlan0
+
+# Simulation
+`gz sim -v 4 -s sim/simple_world.sdf`
+`ros2 run ros_gz_bridge parameter_bridge --ros-args -p config_file:=sim/ros_gz_bridge_config.yaml`
