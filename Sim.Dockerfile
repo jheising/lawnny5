@@ -1,7 +1,7 @@
 FROM ros:iron
 
 RUN sudo apt-get update -y # && sudo apt-get upgrade -y -f
-RUN sudo apt-get install -y -f ros-iron-rosbridge-suite ros-iron-webots-ros2 python3-colcon-common-extensions python3-pip ros-iron-webots-ros2 wget
+RUN sudo apt-get install -y -f ros-iron-rosbridge-suite ros-iron-webots-ros2 python3-colcon-common-extensions python3-pip ros-iron-teleop-twist-joy wget
 
 RUN python3 -m pip install pysabertooth depthai
 
@@ -15,7 +15,7 @@ RUN sudo mkdir -p /etc/apt/keyrings && \
     cd /etc/apt/keyrings && \
     sudo wget -q https://cyberbotics.com/Cyberbotics.asc && \
     echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/Cyberbotics.asc] https://cyberbotics.com/debian binary-amd64/" | sudo tee /etc/apt/sources.list.d/Cyberbotics.list
-RUN sudo apt-get update -y && sudo apt-get install -y -f webots
+RUN sudo apt-get update -y && sudo apt-get install -y -f webots ros-iron-webots-ros2
 
 # Build Webots
 #WORKDIR  /root

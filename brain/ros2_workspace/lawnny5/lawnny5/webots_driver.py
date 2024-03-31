@@ -1,5 +1,6 @@
 import rclpy
 from geometry_msgs.msg import Twist
+from sensor_msgs.msg import Image
 
 HALF_DISTANCE_BETWEEN_WHEELS = 0.69 / 2
 WHEEL_RADIUS = 0.095
@@ -23,17 +24,15 @@ class WebotsDriver:
         rclpy.init(args=None)
         self.__node = rclpy.create_node('webots_driver')
         self.__node.create_subscription(Twist, 'cmd_motor', self.__cmd_vel_callback, 1)
-        self.__node.get_logger().info("Starting Webots Driver!")
 
     def __cmd_vel_callback(self, twist):
-        self.__node.get_logger().info("Got twist: %s" % twist)
         self.__target_twist = twist
 
     def step(self):
         rclpy.spin_once(self.__node, timeout_sec=0)
 
         forward_speed = self.__target_twist.linear.x
-        angular_speed = self.__target_twist.angular.z
+        angular_speed = -self.__target_twist.angular.z
 
         command_motor_left = (forward_speed - angular_speed * HALF_DISTANCE_BETWEEN_WHEELS) / WHEEL_RADIUS
         command_motor_right = (forward_speed + angular_speed * HALF_DISTANCE_BETWEEN_WHEELS) / WHEEL_RADIUS

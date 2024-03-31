@@ -1,6 +1,12 @@
 <?xml version="1.0" ?>
 <robot name="Lawnny5">
     <webots>
+        <device reference="cam1" type="Camera">
+            <ros>
+                <topicName>/image_raw/cam1</topicName>
+                <alwaysOn>true</alwaysOn>
+            </ros>
+        </device>
         <plugin type="lawnny5.webots_driver.WebotsDriver" />
     </webots>
 </robot>
