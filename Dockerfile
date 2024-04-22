@@ -1,4 +1,4 @@
-FROM ros:iron
+FROM ros:humble
 
 # For node
 # RUN curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash

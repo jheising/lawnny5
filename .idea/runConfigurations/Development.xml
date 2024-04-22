@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Development" type="docker-deploy" factoryName="dockerfile" server-name="Docker">
+  <configuration default="false" name="Development" type="docker-deploy" factoryName="dockerfile" server-name="Debian UTM">
     <deployment type="dockerfile">
       <settings>
         <option name="containerName" value="lawnny5-ros" />

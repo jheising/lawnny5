@@ -31,5 +31,12 @@ sudo nmcli device wifi hotspot ssid lawnny5 password NeedMowInput ifname wlan0
 sudo nmcli device disconnect wlan0 && sudo nmcli device up wlan0
 
 # Simulation
+https://www.codeluge.com/post/setting-up-docker-on-macos-m1-arm64-to-use-debian-10.4-docker-engine/
+
+On Mac:
+
+`ssh debian@127.0.0.1 -p 22022 -N -L/tmp/docker-on-debian.sock:/var/run/docker.sock ssh://debian@127.0.0.1`
+
+
 `gz sim -v 4 -s sim/simple_world.sdf`
 `ros2 run ros_gz_bridge parameter_bridge --ros-args -p config_file:=sim/ros_gz_bridge_config.yaml`

@@ -3,28 +3,19 @@
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/floors/protos/CircleArena.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/humans/pedestrian/protos/Pedestrian.proto"
 
 WorldInfo {
 }
 Viewpoint {
   orientation -0.33185733874619844 -0.09874274160469809 0.9381474178937331 3.686018050088086
   position 3.921494715691214 2.5051576329451835 3.6297446400767495
-  follow "my_robot"
+  follow "lawnny5"
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
 CircleArena {
-}
-Pedestrian {
-  translation -1 -5 1.27
-  name "pedestrian(1)"
-  controllerArgs [
-    "--trajectory=-1 -5, 1 -5, 5 -1, 5 1,  1 5, -1 5, -5 1, -5 -1"
-  ]
-  shirtColor 0.466667 0.0980392 0.458824
 }
 Robot {
   children [
@@ -128,7 +119,7 @@ Robot {
       antiAliasing TRUE
     }
   ]
-  name "Lawnny5"
+  name "lawnny5"
   boundingObject Pose {
     translation 0 0 0.0415
     children [

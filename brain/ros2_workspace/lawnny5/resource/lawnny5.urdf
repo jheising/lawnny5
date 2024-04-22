@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<robot name="Lawnny5">
+<robot name="lawnny5">
     <webots>
         <device reference="cam1" type="Camera">
             <ros>

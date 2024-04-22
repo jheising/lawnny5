@@ -35,6 +35,10 @@ launch:
       pkg: "lawnny5"
       exec: "web_control_ui"
       output: "screen"
+  - node:
+      pkg: "lawnny5"
+      exec: "follow_me_tracker"
+      output: "screen"
 #  - node:
 #      pkg: "lawnny5"
 #      exec: "depth_ai_camera"

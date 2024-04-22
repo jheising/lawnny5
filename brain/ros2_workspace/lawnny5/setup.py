@@ -14,6 +14,7 @@ setup(
          ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'resource'), glob('resource/*', recursive=True)),
+        #(os.path.join('share', package_name, 'lib'), glob('../lib/*', recursive=True)),
         (os.path.join('share', package_name, 'worlds'), glob('worlds/*', recursive=True)),
         (os.path.join('share', package_name, 'launch'), glob(os.path.join('launch', '*launch.[pxy][yma]*'))),
     ],
@@ -34,6 +35,7 @@ setup(
             'depth_ai_camera_uvc = lawnny5.depth_ai_camera_uvc:main',
             'web_control_ui = lawnny5.web_control_ui:main',
             'webots_driver = lawnny5.webots_driver:main',
+            'follow_me_tracker = lawnny5.follow_me_tracker:main',
         ],
     },
 )
