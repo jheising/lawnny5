@@ -1,20 +1,10 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Simulator" type="docker-deploy" factoryName="dockerfile" server-name="Debian UTM">
+  <configuration default="false" name="Simulator" type="docker-deploy" factoryName="dockerfile" server-name="Lawnny5 RPI">
     <deployment type="dockerfile">
       <settings>
+        <option name="imageTag" value="lawnny5-ros-sim" />
+        <option name="buildOnly" value="true" />
         <option name="containerName" value="lawnny5-ros-sim" />
-        <option name="portBindings">
-          <list>
-            <DockerPortBindingImpl>
-              <option name="containerPort" value="9090" />
-              <option name="hostPort" value="9090" />
-            </DockerPortBindingImpl>
-            <DockerPortBindingImpl>
-              <option name="containerPort" value="8000" />
-              <option name="hostPort" value="8000" />
-            </DockerPortBindingImpl>
-          </list>
-        </option>
         <option name="commandLineOptions" value="--rm --privileged --network=host" />
         <option name="showCommandPreview" value="true" />
         <option name="sourceFilePath" value="Sim.Dockerfile" />
@@ -23,6 +13,10 @@
             <DockerVolumeBindingImpl>
               <option name="containerPath" value="/root/lawnny5/src" />
               <option name="hostPath" value="/home/debian/lawnny5/src" />
+            </DockerVolumeBindingImpl>
+            <DockerVolumeBindingImpl>
+              <option name="containerPath" value="/dev/bus/usb" />
+              <option name="hostPath" value="/dev/bus/usb" />
             </DockerVolumeBindingImpl>
           </list>
         </option>

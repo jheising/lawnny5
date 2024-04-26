@@ -15,17 +15,19 @@ class WebControlUI(Node):
     def __init__(self):
         super().__init__('web_control_ui')
 
-        with socketserver.TCPServer(("", DEFAULT_SERVER_PORT), Handler) as httpd:
-            self.get_logger().info('Starting web controller UI on port %d' % DEFAULT_SERVER_PORT)
+        self.get_logger().info('Starting web controller UI on port %d' % DEFAULT_SERVER_PORT)
+        httpd = socketserver.TCPServer(("", DEFAULT_SERVER_PORT), Handler)
+        try:
             httpd.serve_forever()
+        except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
+            httpd.shutdown()
+
 
 def main(args=None):
     rclpy.init(args=args)
 
     ros_node = WebControlUI()
-
     rclpy.spin(ros_node)
-
     ros_node.destroy_node()
     rclpy.shutdown()
 

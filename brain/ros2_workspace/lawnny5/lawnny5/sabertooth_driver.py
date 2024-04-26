@@ -3,6 +3,7 @@ from rclpy.node import Node
 from geometry_msgs.msg import Point
 from std_msgs.msg import Bool
 from pysabertooth import Sabertooth
+from geometry_msgs.msg import Twist
 
 SERIAL_TIMEOUT = 0x0E
 RAMPING = 0x10
@@ -36,7 +37,7 @@ class SabertoothController(Node):
             1)
 
         self.create_subscription(
-            Point,
+            Twist,
             'cmd_motor',
             self.motor_command_callback,
             1)
@@ -77,9 +78,6 @@ class SabertoothController(Node):
 
     def motor_command_callback(self, twist_msg):
 
-        if not self.sabertooth_controller:
-            return
-
         # Don't allow any motor commands if e_stop = True
         if self.e_stop:
             self.get_logger().info('Cannot process motor command because of EMERGENCY STOP')
@@ -90,20 +88,20 @@ class SabertoothController(Node):
         ang_speed = twist_msg.angular.z
 
         # convert linear and angular inputs to left and right wheel velocities
-        motor1 = ((2 * lin_speed) - (ang_speed * self.WHEEL_SEPARATION)) / (
-                2.0 * self.WHEEL_RADIUS
+        motor1 = ((2 * lin_speed) - (ang_speed * WHEEL_SEPARATION)) / (
+                2.0 * WHEEL_RADIUS
         )
 
-        motor2 = ((2 * lin_speed) + (ang_speed * self.WHEEL_SEPARATION)) / (
-                2.0 * self.WHEEL_RADIUS
+        motor2 = ((2 * lin_speed) + (ang_speed * WHEEL_SEPARATION)) / (
+                2.0 * WHEEL_RADIUS
         )
 
-        # map values obtained above between [-70 , 70] out of [-100,100]
         motor1 = map_val(motor1, -14.736, 14.736, -100.0, 100.0)
         motor2 = map_val(motor2, -14.736, 14.736, -100.0, 100.0)
 
-        self.sabertooth_controller.drive(1, motor1)
-        self.sabertooth_controller.drive(2, motor2)
+        if self.sabertooth_controller:
+            self.sabertooth_controller.drive(1, motor1)
+            self.sabertooth_controller.drive(2, motor2)
 
     def initialize_sabertooth(self, device, address):
         self.get_logger().info("Initializing Sabertooth motor controller:\ndevice: %s\naddress: %d" % (device, address))

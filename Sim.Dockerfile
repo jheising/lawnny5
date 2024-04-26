@@ -6,7 +6,6 @@ RUN sudo apt-get install -y -f ros-humble-rosbridge-suite \
     ros-humble-nav2-bringup \
     python3-colcon-common-extensions \
     python3-virtualenv \
-    ros-humble-teleop-twist-joy \
     ros-humble-webots-ros2 \
     iproute2 \
     ros-humble-webots-ros2
@@ -23,12 +22,14 @@ WORKDIR /root/lawnny5
 
 #RUN virtualenv -p python3 ./.venv
 #RUN source ./.venv/bin/activate
-RUN python3 -m pip install pysabertooth depthai opencv-python
+# We have to lock depthai to 2.20.2 because of this issue https://github.com/geaxgx/depthai_blazepose/issues/37
+RUN python3 -m pip install pysabertooth depthai==2.20.2 opencv-python
 
 # https://www.theconstruct.ai/ros2-how-to-install-third-party-python-packages-using-ros2-5/
 
-
-# RUN colcon build
+# docker run -d -i -t -v /home/debian/lawnny5/src:/root/lawnny5/src -v /dev/bus/usb:/dev/bus/usb --name lawnny5-ros-sim --rm --network host --device-cgroup-rule='c 189:* rmw' --privileged lawnny5-ros-sim:latest
+# docker run -d -i -t -v /home/lawnny5/src/brain/ros2_workspace:/root/lawnny5/src -v /dev/bus/usb:/dev/bus/usb --name lawnny5-ros-sim --rm --network host --device-cgroup-rule='c 189:* rmw' --privileged lawnny5-ros-sim:latest
+# RUN colcon build && source install/local_setup.bash
 
 # CMD . /opt/ros/humble/setup.bash && . install/local_setup.bash && ros2 launch lawnny5 simulate_launch.py
 

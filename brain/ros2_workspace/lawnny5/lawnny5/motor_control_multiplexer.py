@@ -2,12 +2,19 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
+from std_msgs.msg import String
+from lifecycle_msgs.srv import ChangeState
+from lifecycle_msgs.msg import Transition
+from rclpy.callback_groups import ReentrantCallbackGroup
+from enum import Enum
+
+
+class NAV_MODE(str, Enum):
+    JOYSTICK = 'JOYSTICK'
+    FOLLOW_ME = 'FOLLOW_ME'
 
 
 class MotorControlMultiplexer(Node):
-    # When set to true it means that the joystick has taken over and only messages received from the joystick
-    # will be sent to the motor controller
-    joystick_override = True
 
     def __init__(self):
         super().__init__('motor_control_multiplexer')
@@ -27,55 +34,95 @@ class MotorControlMultiplexer(Node):
             self.process_joystick_msg,
             1)
 
+        self.nav_mode_subscription = self.create_subscription(
+            String,
+            'nav_mode',
+            self.process_nav_mode_change,
+            1)
+
         self.motor_commands = self.create_publisher(Twist, 'cmd_motor', 1)
+        self.joy_twist = Twist()
 
-        # self.WHEEL_RADIUS = 0.095  # radius of wheels (meters)
-        # self.WHEEL_SEPARATION = 0.69  # width of the robot (meters)
-        self.joystick_override = False
+        self.nav_mode = None
+        self.nav_mode_client = None
+        self.cb_group = ReentrantCallbackGroup()
+        self.set_nav_mode(NAV_MODE.FOLLOW_ME)
 
-    def process_joystick_msg(self, twist_msg):
-        # The joystick has moved, let's move to override mode
-        self.joystick_override = True
-        #self.get_logger().info("joy: %s" % twist_msg)
-        # self.process_twist_msg(twist_msg)
+    def nav_mode_state_change_callback(self, request, response):
+        self.get_logger().info('nav_mode_state_change_callback')
+
+    def transition_nav_service_state(self, state):
+        req = ChangeState.Request()
+        req.transition = Transition(label=state)
+        future = self.nav_mode_client.call_async(req)
+        rclpy.spin_until_future_complete(self, future, timeout_sec=20)
+        return future.result() and future.result().success
+
+    def shutdown_current_nav_mode(self):
+        if self.nav_mode_client:
+            self.get_logger().info('Shutting down previous nav mode...')
+            self.transition_nav_service_state('cleanup')
+
+            self.nav_mode_client.destroy()
+            self.nav_mode_client = None
+
+    def set_nav_mode(self, nav_mode):
+
+        if nav_mode == self.nav_mode:
+            return
+
+        self.nav_mode = nav_mode
+
+        self.shutdown_current_nav_mode()
+
+        self.get_logger().info('Transitioning to Nav Mode: %s' % nav_mode)
+
+        if nav_mode == NAV_MODE.JOYSTICK:
+            pass
+        elif nav_mode == NAV_MODE.FOLLOW_ME:
+            self.nav_mode_client = self.create_client(ChangeState, '/follow_me_tracker/change_state',
+                                                      callback_group=self.cb_group)
+        else:
+            self.get_logger().error('No Nav Mode: %s' % nav_mode)
+
+        if self.nav_mode_client:
+            result = self.transition_nav_service_state('configure')
+            if not result and self.nav_mode != NAV_MODE.JOYSTICK:
+                self.get_logger().error('Unable to transition to Nav Mode: %s' % nav_mode)
+                self.set_nav_mode(NAV_MODE.JOYSTICK)
+
+    def process_nav_mode_change(self, string_msg):
+        mode = string_msg.data
+        self.set_nav_mode(mode)
+
+    def process_joystick_msg(self, joy_msg):
+        # The joystick has moved, let's transition to joystick mode
+        self.set_nav_mode(NAV_MODE.JOYSTICK)
+
+        # Turn our joystick position into a twist message
+        self.joy_twist.angular.z = joy_msg.axes[0] * 4.09
+        self.joy_twist.linear.x = joy_msg.axes[1] * 1.4
+
+        self.publish_cmd_motor(self.joy_twist)
 
     def process_cmd_vel_msg(self, twist_msg):
-        # self.get_logger().info("cmd_vel: %s" % twist_msg)
-        # If the joystick has taken command, don't process cmd_vel messages
-        # if self.joystick_override:
-        #     return
-        self.process_twist_msg(twist_msg)
+        # If we're in joystick nav mode, ignore all cmd_vel messages and only allow controls from the joystick
+        if self.nav_mode == NAV_MODE.JOYSTICK:
+            return
+        self.publish_cmd_motor(twist_msg)
 
-    def process_twist_msg(self, twist_msg):
+    def publish_cmd_motor(self, twist_msg):
         self.motor_commands.publish(twist_msg)
-        # read linear and angular velocities from twist message
-        # lin_speed = twist_msg.linear.x
-        # ang_speed = twist_msg.angular.z
-        #
-        # # convert linear and angular inputs to left and right wheel velocities
-        # motor1 = ((2 * lin_speed) - (ang_speed * self.WHEEL_SEPARATION)) / (
-        #         2.0 * self.WHEEL_RADIUS
-        # )
-        #
-        # motor2 = ((2 * lin_speed) + (ang_speed * self.WHEEL_SEPARATION)) / (
-        #         2.0 * self.WHEEL_RADIUS
-        # )
-        #
-        # # map values obtained above between [-70 , 70] out of [-100,100]
-        # point_msg = Point()
-        # point_msg.x = map_val(motor1, -14.736, 14.736, -100.0, 100.0)
-        # point_msg.y = map_val(motor2, -14.736, 14.736, -100.0, 100.0)
-        # self.sabertooth_commands.publish(point_msg)
 
 
 def main(args=None):
     rclpy.init(args=args)
 
-    motor_multiplexer = MotorControlMultiplexer()
+    node = MotorControlMultiplexer()
 
-    rclpy.spin(motor_multiplexer)
+    rclpy.spin(node)
 
-    motor_multiplexer.destroy_node()
+    node.destroy_node()
     rclpy.shutdown()
 
 
