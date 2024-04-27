@@ -88,19 +88,21 @@ class SabertoothController(Node):
         ang_speed = twist_msg.angular.z
 
         # convert linear and angular inputs to left and right wheel velocities
-        motor1 = ((2 * lin_speed) - (ang_speed * WHEEL_SEPARATION)) / (
+        motor2 = ((2 * lin_speed) - (ang_speed * WHEEL_SEPARATION)) / (
                 2.0 * WHEEL_RADIUS
         )
 
-        motor2 = ((2 * lin_speed) + (ang_speed * WHEEL_SEPARATION)) / (
+        motor1 = ((2 * lin_speed) + (ang_speed * WHEEL_SEPARATION)) / (
                 2.0 * WHEEL_RADIUS
         )
 
         motor1 = map_val(motor1, -14.736, 14.736, -100.0, 100.0)
         motor2 = map_val(motor2, -14.736, 14.736, -100.0, 100.0)
 
+        # self.get_logger().info("%f,%f : %f,%f" % (lin_speed, ang_speed, motor1, motor2))
+
         if self.sabertooth_controller:
-            self.sabertooth_controller.drive(1, motor1)
+            self.sabertooth_controller.drive(1, -motor1)
             self.sabertooth_controller.drive(2, motor2)
 
     def initialize_sabertooth(self, device, address):

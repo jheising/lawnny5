@@ -5,23 +5,24 @@ from rclpy.lifecycle import TransitionCallbackReturn
 from .lib.depthai_hand_tracker.HandController import HandController
 from .lib.pid import PID
 from geometry_msgs.msg import Twist
+from std_msgs.msg import String
 
 HAND_SIZE_IN_M = 0.1778
 PERCEIVED_FOCAL_LENGTH = 1303.0
-FOLLOW_DISTANCE_IN_M = 0.3048
+FOLLOW_DISTANCE_IN_M = 1.0
 MAX_MOVE_TIMEOUT_NS = 5e+8  # half a second
 
-LINEAR_PID_PARAMS = [0.002,  # P
+LINEAR_PID_PARAMS = [1.5,  # P
                      0.0,  # I
                      0.0,  # D
                      0.0,  # MIN
-                     0.6]  # MAX
+                     0.8]  # MAX
 
-ANGULAR_PID_PARAMS = [0.2,  # P
-                      0.0,  # I
+ANGULAR_PID_PARAMS = [4.0,  # P
+                      1.0,  # I
                       0.0,  # D
-                      -0.6,  # MIN
-                      0.6]  # MAX
+                      -1.5,  # MIN
+                      1.5]  # MAX
 
 
 def convert_hand_size_to_y_distance_in_m(rect_width, rect_height):
@@ -32,6 +33,10 @@ def convert_hand_size_to_y_distance_in_m(rect_width, rect_height):
 def convert_hand_position_to_x_distance_in_m(y_distance_in_m, frame_size_in_px, center_x_in_px):
     center_x = center_x_in_px - (frame_size_in_px / 2.0)
     return ((y_distance_in_m * center_x) / PERCEIVED_FOCAL_LENGTH) * 1.5
+
+
+def clamp(value, min_val, max_val):
+    return min(max_val, max(min_val, value))
 
 
 class FollowMeTracker(Node):
@@ -45,11 +50,23 @@ class FollowMeTracker(Node):
         self.last_movement_time = None
         self.twist_cmd = Twist()
 
-        self.linear_pid = PID(LINEAR_PID_PARAMS[0], LINEAR_PID_PARAMS[1], LINEAR_PID_PARAMS[2], LINEAR_PID_PARAMS[3], LINEAR_PID_PARAMS[4])
-        self.angular_pid = PID(ANGULAR_PID_PARAMS[0], ANGULAR_PID_PARAMS[1], ANGULAR_PID_PARAMS[2], ANGULAR_PID_PARAMS[3], ANGULAR_PID_PARAMS[4])
+        self.linear_pid = PID(LINEAR_PID_PARAMS[0], LINEAR_PID_PARAMS[1], LINEAR_PID_PARAMS[2], 5.0, -5.0)
+        self.angular_pid = PID(ANGULAR_PID_PARAMS[0], ANGULAR_PID_PARAMS[1], ANGULAR_PID_PARAMS[2], 5.0, -5.0)
+
+        self.create_subscription(
+            String,
+            'tmp_pid',
+            self.tmp_pid_set,
+            1)
+
+    def tmp_pid_set(self, msg):
+        self.get_logger().info("Setting new PID values: %s" % msg.data)
+        components = msg.data.split(",")
+        self.angular_pid.set_gains(float(components[0]), float(components[1]), float(components[2]), float(components[3]), float(components[4]))
+        self.angular_pid.reset()
 
     def reset_movement(self):
-        self.publish_twist(0.0, 0.0, True)
+        self.publish_twist(0.0, 0.0)
         self.linear_pid.reset()
         self.angular_pid.reset()
 
@@ -61,16 +78,16 @@ class FollowMeTracker(Node):
         now = self.get_clock().now().nanoseconds
 
         # If it's been a while since our last hand recognition, stop the robot and reset everything
-        if self.last_movement_time and (now - self.last_movement_time) >= MAX_MOVE_TIMEOUT_NS:
+        if self.last_movement_time and (now - self.last_movement_time) >= MAX_MOVE_TIMEOUT_NS and (self.twist_cmd.angular.z != 0.0 or self.twist_cmd.linear.x != 0.0):
             self.reset_movement()
 
         return
 
-    def publish_twist(self, linear_velocity, angular_velocity, dedupe=True):
+    def publish_twist(self, linear_velocity, angular_velocity):
 
         # Ignore this command if nothing has changed
-        if dedupe and self.twist_cmd.angular.z == angular_velocity and self.twist_cmd.linear.x == linear_velocity:
-            return
+        # if dedupe and self.twist_cmd.angular.z == angular_velocity and self.twist_cmd.linear.x == linear_velocity:
+        #     return
 
         self.twist_cmd.angular.z = angular_velocity
         self.twist_cmd.linear.x = linear_velocity
@@ -79,43 +96,19 @@ class FollowMeTracker(Node):
             self.cmd_vel_publisher.publish(self.twist_cmd)
 
     def process_movement(self, event):
+
         now = self.get_clock().now().nanoseconds
         self.last_movement_time = now
 
         hand_y_coord_in_meters = convert_hand_size_to_y_distance_in_m(event.hand.rect_w_a, event.hand.rect_h_a)
         hand_x_coord_in_meters = convert_hand_position_to_x_distance_in_m(hand_y_coord_in_meters, self.hand_controller.tracker.frame_size, event.hand.rect_x_center_a)
 
-        angular_velocity = round(self.angular_pid.update_PID(hand_x_coord_in_meters), 3)
+        linear_velocity = clamp(self.linear_pid.update_PID(-(hand_y_coord_in_meters - FOLLOW_DISTANCE_IN_M)), LINEAR_PID_PARAMS[3], LINEAR_PID_PARAMS[4])
+        angular_velocity = clamp(self.angular_pid.update_PID(-hand_x_coord_in_meters), ANGULAR_PID_PARAMS[3], ANGULAR_PID_PARAMS[4])
 
-        self.publish_twist(0.0, -angular_velocity)
+        self.get_logger().info("Dist: %s, AV: %s, LV: %s" % (-(hand_y_coord_in_meters - FOLLOW_DISTANCE_IN_M), angular_velocity, linear_velocity))
 
-        # self.get_logger().info("%s - %s" % (hand_y_dist_in_meters, hand_x_dist_in_meters))
-        #
-        # self.get_logger().info("y: " % (hand_y_dist_in_meters))
-
-        # now = self.get_clock().now().nanoseconds
-        # time_delta = 0
-        #
-        # if self.last_hand_recognition_time and self.last_hand_recognition_time > 0:
-        #     calculated_time_delta = now - self.last_hand_recognition_time
-        #     if calculated_time_delta <= MAX_TIME_DELTA_IN_NS:
-        #         time_delta = calculated_time_delta
-        #
-        # self.last_hand_recognition_time = now
-        #
-        # hand_distance_delta = 0
-        #
-        # if self.last_hand_distance_in_meters:
-        #     hand_distance_delta = hand_y_dist_in_meters - self.last_hand_distance_in_meters
-
-        # linear_velocity = 0
-
-        # We only move the robot forwards if the person is greater than or equal to the follow distance.
-        # if hand_distance_in_meters >= FOLLOW_DISTANCE_IN_M:
-
-        # self.get_logger().info("Now: %d, Delta: %d, Hand Vel: %f" % (now, time_delta, linear_velocity))
-
-        # self.get_logger().info("Found hand! %f,%f - %f,%f" % (event.hand.rect_w_a, event.hand.rect_h_a, event.hand.rect_x_center_a, event.hand.rect_y_center_a))
+        self.publish_twist(linear_velocity, angular_velocity)
 
     def hand_recognized(self, event):
         if event.hand.gesture == "ONE":
@@ -136,7 +129,7 @@ class FollowMeTracker(Node):
             self.cmd_vel_publisher = self.create_publisher(Twist, 'cmd_vel', 1)
             self.reset_movement()
             self.hand_controller = HandController(config)
-            self.timer = self.create_timer(0.1, self.tick)
+            self.timer = self.create_timer(0.05, self.tick)
         except Exception as e:
             self.get_logger().error('Unable to create HandController: %s' % e)
             return TransitionCallbackReturn.FAILURE

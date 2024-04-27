@@ -25,13 +25,15 @@ Create terminal into running container
 `docker exec -it 56218417f957a86ecb9497fc252b1e9239023ebda1af49a5d72ac50178aa153a bash`
 
 # Start wireless AP
-sudo nmcli device wifi hotspot ssid lawnny5 password NeedMowInput ifname wlan0
+sudo nmcli device wifi hotspot ssid lawnny5 password needmoreinput ifname wlan0
 
 ### Stop
 sudo nmcli device disconnect wlan0 && sudo nmcli device up wlan0
 
 # Simulation
 https://www.codeluge.com/post/setting-up-docker-on-macos-m1-arm64-to-use-debian-10.4-docker-engine/
+
+`sudo nmcli d wifi connect "ssid_here" password "password_here" ifname wlan1`
 
 On Mac:
 

@@ -13,7 +13,7 @@ DEFAULT_CONFIG = {
         "hand": "any",
         "trigger": "enter", 
         "first_trigger_delay": 0.3,
-        "next_trigger_delay": 0.1,
+        "next_trigger_delay": 0.05,
         "max_missing_frames": 3,
     },
 

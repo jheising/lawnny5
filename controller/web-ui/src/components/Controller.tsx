@@ -25,6 +25,7 @@ export function Controller() {
     const [displayMessageIsError, setDisplayMessageIsError] = useState(false);
     const joystickPublisher = useRef<Topic>();
     const eStopPublisher = useRef<Topic>();
+    const navModePublisher = useRef<Topic>();
     const [joystickPosition, setJoystickPosition] = useState<JoystickPosition>();
     const [settings, setSettings] = useState<ControllerSettings>({
         direction: 1,
@@ -97,9 +98,16 @@ export function Controller() {
                 messageType: "std_msgs/Bool"
             });
 
+            navModePublisher.current = new Topic({
+                ros: ros.ros,
+                name: "nav_mode",
+                messageType: "std_msgs/String"
+            });
+
         } else {
             joystickPublisher.current = undefined;
             eStopPublisher.current = undefined;
+            navModePublisher.current = undefined;
         }
     }, [ros.isConnected]);
 
@@ -109,6 +117,14 @@ export function Controller() {
                 data: true
             }));
             setIsESTOP(true);
+        }
+    }
+
+    function handleFollowMeMode() {
+        if (navModePublisher.current) {
+            navModePublisher.current.publish(new Message({
+                data: "FOLLOW_ME"
+            }));
         }
     }
 
@@ -166,6 +182,7 @@ export function Controller() {
                 <div><Switch dark bordered size="large" label={settings.direction === 2 ? "Reverse Direction" : "Forward Direction"} checked={settings.direction === 2} onChange={handleDirectionChange} /></div>
                 <div className="flex items-center gap-4"><input type="range" min="0" max="1" value={settings.xExpo} className="w-1/2" step={0.05} onChange={handleXExpoChange} /> X Expo</div>
                 <div className="flex items-center gap-4"><input type="range" min="0" max="1" value={settings.yExpo} className="w-1/2" step={0.05} onChange={handleYExpoChange} /> Y Expo</div>
+                <div><Button dark onClick={handleFollowMeMode}>Follow-Me Mode</Button></div>
             </div>
             <div className="p-4">
                 {gamepad.connected && <Chip dark key="4" type="info" className="ma-3">

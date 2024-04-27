@@ -19,7 +19,7 @@ class MotorControlMultiplexer(Node):
     def __init__(self):
         super().__init__('motor_control_multiplexer')
 
-        self.get_logger().info("Starting multiplexer!!!")
+        self.nav_mode_cb_group = ReentrantCallbackGroup()
 
         # Listen for cmd_vel commands
         self.cmd_vel_subscription = self.create_subscription(
@@ -38,32 +38,33 @@ class MotorControlMultiplexer(Node):
             String,
             'nav_mode',
             self.process_nav_mode_change,
-            1)
+            1, callback_group=self.nav_mode_cb_group)
 
         self.motor_commands = self.create_publisher(Twist, 'cmd_motor', 1)
         self.joy_twist = Twist()
 
         self.nav_mode = None
         self.nav_mode_client = None
-        self.cb_group = ReentrantCallbackGroup()
-        self.set_nav_mode(NAV_MODE.FOLLOW_ME)
+        self.set_nav_mode(NAV_MODE.JOYSTICK)
 
-    def nav_mode_state_change_callback(self, request, response):
-        self.get_logger().info('nav_mode_state_change_callback')
+    # def nav_mode_state_change_callback(self, request, response):
+    #     self.get_logger().info('nav_mode_state_change_callback')
 
     def transition_nav_service_state(self, state):
         req = ChangeState.Request()
         req.transition = Transition(label=state)
         future = self.nav_mode_client.call_async(req)
-        rclpy.spin_until_future_complete(self, future, timeout_sec=20)
-        return future.result() and future.result().success
+        #rclpy.spin_until_future_complete(self, future, timeout_sec=10)
+        # future.wait(10)
+        # self.get_logger().info("finishing 2")
+        # return future.result() and future.result().success
+        return True
 
     def shutdown_current_nav_mode(self):
         if self.nav_mode_client:
             self.get_logger().info('Shutting down previous nav mode...')
             self.transition_nav_service_state('cleanup')
-
-            self.nav_mode_client.destroy()
+            self.destroy_client(self.nav_mode_client)
             self.nav_mode_client = None
 
     def set_nav_mode(self, nav_mode):
@@ -80,16 +81,17 @@ class MotorControlMultiplexer(Node):
         if nav_mode == NAV_MODE.JOYSTICK:
             pass
         elif nav_mode == NAV_MODE.FOLLOW_ME:
-            self.nav_mode_client = self.create_client(ChangeState, '/follow_me_tracker/change_state',
-                                                      callback_group=self.cb_group)
+            self.nav_mode_client = self.create_client(ChangeState, '/follow_me_tracker/change_state')
         else:
             self.get_logger().error('No Nav Mode: %s' % nav_mode)
 
-        if self.nav_mode_client:
+        if self.nav_mode != NAV_MODE.JOYSTICK and self.nav_mode_client:
             result = self.transition_nav_service_state('configure')
-            if not result and self.nav_mode != NAV_MODE.JOYSTICK:
+            if not result and self.nav_mode:
                 self.get_logger().error('Unable to transition to Nav Mode: %s' % nav_mode)
                 self.set_nav_mode(NAV_MODE.JOYSTICK)
+            else:
+                self.get_logger().info('Successfully transitioned to Nav Mode: %s' % nav_mode)
 
     def process_nav_mode_change(self, string_msg):
         mode = string_msg.data
@@ -100,8 +102,8 @@ class MotorControlMultiplexer(Node):
         self.set_nav_mode(NAV_MODE.JOYSTICK)
 
         # Turn our joystick position into a twist message
-        self.joy_twist.angular.z = joy_msg.axes[0] * 4.09
         self.joy_twist.linear.x = joy_msg.axes[1] * 1.4
+        self.joy_twist.angular.z = joy_msg.axes[0] * 4.09
 
         self.publish_cmd_motor(self.joy_twist)
 
@@ -109,6 +111,8 @@ class MotorControlMultiplexer(Node):
         # If we're in joystick nav mode, ignore all cmd_vel messages and only allow controls from the joystick
         if self.nav_mode == NAV_MODE.JOYSTICK:
             return
+
+        self.get_logger().info("Publishing Motor")
         self.publish_cmd_motor(twist_msg)
 
     def publish_cmd_motor(self, twist_msg):
@@ -119,11 +123,15 @@ def main(args=None):
     rclpy.init(args=args)
 
     node = MotorControlMultiplexer()
+    executor = rclpy.executors.MultiThreadedExecutor()
+    executor.add_node(node)
 
-    rclpy.spin(node)
-
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        executor.spin()
+    finally:
+        executor.shutdown()
+        node.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == '__main__':

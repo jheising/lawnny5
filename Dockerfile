@@ -1,29 +1,25 @@
-FROM ros:humble
+FROM ros:humble-ros-base-jammy
 
-# For node
-# RUN curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash
+RUN sudo apt-get update -y # && sudo apt-get upgrade -y -f
+RUN sudo apt-get install -y -f ros-humble-rosbridge-suite \
+    python3-colcon-common-extensions \
+    python3-pip \
+    ffmpeg libsm6 libxext6
 
-RUN sudo apt-get update -y && sudo apt-get upgrade -y -f
-RUN sudo apt-get install -y -f ros-iron-rosbridge-suite python3-colcon-common-extensions ros-iron-teleop-twist-joy python3-pip
-
-RUN python3 -m pip install pysabertooth depthai
-
-RUN mkdir -p /root/ros2_ws/src
+RUN mkdir -p /root/lawnny5/src
 
 ## Make sure ROS is always setup when loading our shell
-RUN echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc
+RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 
-# Copy our ROS package source code
-#COPY brain/ros2_workspace/src /root/ros2_ws/src
+ENV LAWNNY5_ROOT="/root/lawnny5/src"
 
-# Copy our web controller
-# COPY controller/web-ui/dist /root/ros2_ws/www
+WORKDIR /root/lawnny5
 
-ENV LAWNNY5_ROOT="/root/ros2_ws/src"
-WORKDIR /root/ros2_ws
+# We have to lock depthai to 2.20.2 because of this issue https://github.com/geaxgx/depthai_blazepose/issues/37
+RUN python3 -m pip install pysabertooth depthai==2.20.2 opencv-python
 
-# RUN colcon build
+COPY ./brain/* /root/lawnny5/src
 
-# colcon build && source install/local_setup.bash && ros2 launch lawnny5 lawnny5_launch.yaml
+RUN . /opt/ros/humble/setup.sh && colcon build
 
-# CMD . /opt/ros/iron/setup.sh && . install/setup.sh && ros2 launch lawnny5 lawnny5_launch.yaml
+# CMD . install/local_setup.sh && ros2 launch lawnny5 robotulate_launch.yaml

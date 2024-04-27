@@ -27,6 +27,7 @@ RUN python3 -m pip install pysabertooth depthai==2.20.2 opencv-python
 
 # https://www.theconstruct.ai/ros2-how-to-install-third-party-python-packages-using-ros2-5/
 
+# sudo mount -t cifs //192.168.1.30/lawnny5 /home/lawnny5/src -o username=jimheising,sec=ntlmssp,nounix
 # docker run -d -i -t -v /home/debian/lawnny5/src:/root/lawnny5/src -v /dev/bus/usb:/dev/bus/usb --name lawnny5-ros-sim --rm --network host --device-cgroup-rule='c 189:* rmw' --privileged lawnny5-ros-sim:latest
 # docker run -d -i -t -v /home/lawnny5/src/brain/ros2_workspace:/root/lawnny5/src -v /dev/bus/usb:/dev/bus/usb --name lawnny5-ros-sim --rm --network host --device-cgroup-rule='c 189:* rmw' --privileged lawnny5-ros-sim:latest
 # RUN colcon build && source install/local_setup.bash
