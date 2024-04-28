@@ -6,11 +6,14 @@ from .lib.depthai_hand_tracker.HandController import HandController
 from .lib.pid import PID
 from geometry_msgs.msg import Twist
 from std_msgs.msg import String
+import pytweening
 
 HAND_SIZE_IN_M = 0.1778
 PERCEIVED_FOCAL_LENGTH = 1303.0
 FOLLOW_DISTANCE_IN_M = 1.0
 MAX_MOVE_TIMEOUT_NS = 5e+8  # half a second
+
+MOVEMENT_RAMP_TIME_IN_NS = 1.5e+9  # 1.5 seconds
 
 LINEAR_PID_PARAMS = [1.5,  # P
                      0.0,  # I
@@ -47,7 +50,8 @@ class FollowMeTracker(Node):
         self.hand_controller = None
         self.cmd_vel_publisher = None
         self.timer = None
-        self.last_movement_time = None
+        self.last_recognition_event_time = None
+        self.last_recognition_start_time = None
         self.twist_cmd = Twist()
 
         self.linear_pid = PID(LINEAR_PID_PARAMS[0], LINEAR_PID_PARAMS[1], LINEAR_PID_PARAMS[2], 5.0, -5.0)
@@ -55,12 +59,24 @@ class FollowMeTracker(Node):
 
         self.create_subscription(
             String,
-            'tmp_pid',
-            self.tmp_pid_set,
+            '/follow_me_tracker/pid/linear',
+            self.set_linear_pid,
             1)
 
-    def tmp_pid_set(self, msg):
-        self.get_logger().info("Setting new PID values: %s" % msg.data)
+        self.create_subscription(
+            String,
+            '/follow_me_tracker/pid/angular',
+            self.set_angular_pid,
+            1)
+
+    def set_linear_pid(self, msg):
+        self.get_logger().info("Setting new Linear PID values: %s" % msg.data)
+        components = msg.data.split(",")
+        self.linear_pid.set_gains(float(components[0]), float(components[1]), float(components[2]), float(components[3]), float(components[4]))
+        self.linear_pid.reset()
+
+    def set_angular_pid(self, msg):
+        self.get_logger().info("Setting new Angular PID values: %s" % msg.data)
         components = msg.data.split(",")
         self.angular_pid.set_gains(float(components[0]), float(components[1]), float(components[2]), float(components[3]), float(components[4]))
         self.angular_pid.reset()
@@ -69,6 +85,7 @@ class FollowMeTracker(Node):
         self.publish_twist(0.0, 0.0)
         self.linear_pid.reset()
         self.angular_pid.reset()
+        self.last_recognition_start_time = None
 
     def tick(self):
 
@@ -78,17 +95,12 @@ class FollowMeTracker(Node):
         now = self.get_clock().now().nanoseconds
 
         # If it's been a while since our last hand recognition, stop the robot and reset everything
-        if self.last_movement_time and (now - self.last_movement_time) >= MAX_MOVE_TIMEOUT_NS and (self.twist_cmd.angular.z != 0.0 or self.twist_cmd.linear.x != 0.0):
+        if self.last_recognition_event_time and (now - self.last_recognition_event_time) >= MAX_MOVE_TIMEOUT_NS and (self.twist_cmd.angular.z != 0.0 or self.twist_cmd.linear.x != 0.0):
             self.reset_movement()
 
         return
 
     def publish_twist(self, linear_velocity, angular_velocity):
-
-        # Ignore this command if nothing has changed
-        # if dedupe and self.twist_cmd.angular.z == angular_velocity and self.twist_cmd.linear.x == linear_velocity:
-        #     return
-
         self.twist_cmd.angular.z = angular_velocity
         self.twist_cmd.linear.x = linear_velocity
 
@@ -98,13 +110,30 @@ class FollowMeTracker(Node):
     def process_movement(self, event):
 
         now = self.get_clock().now().nanoseconds
-        self.last_movement_time = now
+        self.last_recognition_event_time = now
+
+        if self.last_recognition_start_time is None:
+            self.last_recognition_start_time = now
 
         hand_y_coord_in_meters = convert_hand_size_to_y_distance_in_m(event.hand.rect_w_a, event.hand.rect_h_a)
         hand_x_coord_in_meters = convert_hand_position_to_x_distance_in_m(hand_y_coord_in_meters, self.hand_controller.tracker.frame_size, event.hand.rect_x_center_a)
 
-        linear_velocity = clamp(self.linear_pid.update_PID(-(hand_y_coord_in_meters - FOLLOW_DISTANCE_IN_M)), LINEAR_PID_PARAMS[3], LINEAR_PID_PARAMS[4])
-        angular_velocity = clamp(self.angular_pid.update_PID(-hand_x_coord_in_meters), ANGULAR_PID_PARAMS[3], ANGULAR_PID_PARAMS[4])
+        linear_error = -(hand_y_coord_in_meters - FOLLOW_DISTANCE_IN_M)
+        angular_error = -hand_x_coord_in_meters
+
+        linear_velocity = clamp(self.linear_pid.update_PID(linear_error), LINEAR_PID_PARAMS[3], LINEAR_PID_PARAMS[4])
+        angular_velocity = clamp(self.angular_pid.update_PID(angular_error), ANGULAR_PID_PARAMS[3], ANGULAR_PID_PARAMS[4])
+
+        # Ramp our movement if there is a large amount of error to start with— this prevents jerking.
+        ramp_time_percentage = (now - self.last_recognition_start_time) / MOVEMENT_RAMP_TIME_IN_NS
+        if ramp_time_percentage <= 1.0:
+            ramp_multiplier = pytweening.easeInOutQuad(ramp_time_percentage)
+            if abs(linear_velocity) >= LINEAR_PID_PARAMS[4] * 0.25:
+                self.get_logger().info("Ramping linear: %s" % ramp_multiplier)
+                linear_velocity = linear_velocity * ramp_multiplier
+            if abs(angular_velocity) >= ANGULAR_PID_PARAMS[4] * 0.25:
+                self.get_logger().info("Ramping angular: %s" % ramp_multiplier)
+                angular_velocity = angular_velocity * ramp_multiplier
 
         self.get_logger().info("Dist: %s, AV: %s, LV: %s" % (-(hand_y_coord_in_meters - FOLLOW_DISTANCE_IN_M), angular_velocity, linear_velocity))
 
@@ -155,10 +184,6 @@ class FollowMeTracker(Node):
 
         return TransitionCallbackReturn.SUCCESS
 
-    # def on_shutdown(self, state: State) -> TransitionCallbackReturn:
-    #     self.get_logger().info('on_shutdown() is called.')
-    #     return TransitionCallbackReturn.SUCCESS
-
 
 def main(args=None):
     rclpy.init(args=args)
@@ -166,8 +191,6 @@ def main(args=None):
     node = FollowMeTracker()
     try:
         rclpy.spin(node)
-    except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
-        pass
     finally:
         node.destroy_node()
         rclpy.shutdown()

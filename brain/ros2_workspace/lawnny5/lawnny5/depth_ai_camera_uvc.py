@@ -54,14 +54,15 @@ class DepthAICameraUVC(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    ros_node = DepthAICameraUVC()
+    node = DepthAICameraUVC()
 
-    ros_node.start()
-    rclpy.spin(ros_node)
-    ros_node.stop()
-
-    ros_node.destroy_node()
-    rclpy.shutdown()
+    try:
+        node.start()
+        rclpy.spin(node)
+    finally:
+        node.stop()
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()

@@ -118,17 +118,15 @@ class SabertoothController(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    sabertooth_controller = SabertoothController()
+    node = SabertoothController()
 
-    sabertooth_controller.start()
-    rclpy.spin(sabertooth_controller)
-    sabertooth_controller.stop()
-
-    # Destroy the node explicitly
-    # (optional - otherwise it will be done automatically
-    # when the garbage collector destroys the node object)
-    sabertooth_controller.destroy_node()
-    rclpy.shutdown()
+    try:
+        node.start()
+        rclpy.spin(node)
+    finally:
+        node.stop()
+        node.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == '__main__':

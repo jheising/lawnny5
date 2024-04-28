@@ -112,7 +112,6 @@ class MotorControlMultiplexer(Node):
         if self.nav_mode == NAV_MODE.JOYSTICK:
             return
 
-        self.get_logger().info("Publishing Motor")
         self.publish_cmd_motor(twist_msg)
 
     def publish_cmd_motor(self, twist_msg):

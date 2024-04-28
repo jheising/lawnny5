@@ -58,10 +58,13 @@ class GlobalSettingsServer(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    ros_node = GlobalSettingsServer()
-    rclpy.spin(ros_node)
-    ros_node.destroy_node()
-    rclpy.shutdown()
+    node = GlobalSettingsServer()
+
+    try:
+        rclpy.spin(node)
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == '__main__':

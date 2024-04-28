@@ -8,7 +8,7 @@ setup(
     name=package_name,
     version='0.0.0',
     packages=find_packages(exclude=['test']),
-    package_data={"": ["*.blob", "*.py.templ"]},
+    package_data={"": ["*.blob", "*.py.templ", "*.mp3"]},
     include_package_data=True,
     data_files=[
         (os.path.join('share', package_name, 'config'), glob('config/*', recursive=True)),

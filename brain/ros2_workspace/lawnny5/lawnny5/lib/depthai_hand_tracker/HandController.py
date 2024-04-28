@@ -16,13 +16,12 @@ DEFAULT_CONFIG = {
         "next_trigger_delay": 0.05,
         "max_missing_frames": 3,
     },
-
     'tracker': 
     { 
         'version': 'edge',
-
         'args': 
         {
+            'input_src': 'rgb_laconic',
             'pd_score_thresh': 0.6,
             'pd_nms_thresh': 0.3,
             'lm_score_thresh': 0.5, 
@@ -30,19 +29,8 @@ DEFAULT_CONFIG = {
             'internal_fps': 30,
             'internal_frame_height': 640,
             'use_gesture': True,
-            # 'crop': True
+            'lm_model': 'sparse'
         },
-    },
-
-    'renderer':
-    {   
-        'enable': False,
-
-        'args':
-        {
-            'output': None,
-        }
-
     }
 }
 
@@ -125,7 +113,6 @@ def check_mandatory_keys(dic, mandatory_keys):
 class HandController:
     def __init__(self, config={}):
         self.config = merge_config(DEFAULT_CONFIG, config)
-        self.renderer = None
         self.tracker = None
 
         # HandController will run callback functions defined in the calling app
@@ -150,12 +137,6 @@ class HandController:
         self.config['tracker']['args']['use_gesture'] = True
         # Init tracker
         self.tracker = HandTracker(**self.config['tracker']['args'])
-
-        # Renderer
-        self.use_renderer = self.config['renderer']['enable']
-        if self.use_renderer:
-            from HandTrackerRenderer import HandTrackerRenderer
-            self.renderer = HandTrackerRenderer(self.tracker, **self.config['renderer']['args'])
 
         self.frame_nb = 0
         
@@ -263,9 +244,6 @@ class HandController:
                 e.callback(e)
 
     def __del__(self):
-        if self.renderer:
-            self.renderer.exit()
-
         if self.tracker:
             self.tracker.exit()
 
