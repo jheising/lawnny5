@@ -26,9 +26,11 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/ObjectTrack.msg"
   "srv/GetGlobalSetting.srv"
   "srv/GetGlobalSettings.srv"
   "srv/SetGlobalSetting.srv"
+  "srv/SetString.srv"
 )
 
 ament_package()

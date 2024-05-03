@@ -6,6 +6,8 @@ from std_msgs.msg import String
 from lifecycle_msgs.srv import ChangeState
 from lifecycle_msgs.msg import Transition
 from rclpy.callback_groups import ReentrantCallbackGroup
+from diagnostic_msgs.msg import KeyValue
+from lawnny5_interfaces.srv import SetGlobalSetting
 from enum import Enum
 
 
@@ -14,12 +16,12 @@ class NAV_MODE(str, Enum):
     FOLLOW_ME = 'FOLLOW_ME'
 
 
-class MotorControlMultiplexer(Node):
+class NavController(Node):
 
     def __init__(self):
-        super().__init__('motor_control_multiplexer')
+        super().__init__('nav_controller')
 
-        self.nav_mode_cb_group = ReentrantCallbackGroup()
+        self.global_settings_cb_group = ReentrantCallbackGroup()
 
         # Listen for cmd_vel commands
         self.cmd_vel_subscription = self.create_subscription(
@@ -34,11 +36,13 @@ class MotorControlMultiplexer(Node):
             self.process_joystick_msg,
             1)
 
-        self.nav_mode_subscription = self.create_subscription(
-            String,
-            'nav_mode',
-            self.process_nav_mode_change,
-            1, callback_group=self.nav_mode_cb_group)
+        self.global_setting_subscription = self.create_subscription(
+            KeyValue,
+            'global_setting_updated',
+            self.process_global_setting_change,
+            10, callback_group=self.global_settings_cb_group)
+
+        self.set_global_setting_client = self.create_client(SetGlobalSetting, 'set_setting')
 
         self.motor_commands = self.create_publisher(Twist, 'cmd_motor', 1)
         self.joy_twist = Twist()
@@ -47,14 +51,18 @@ class MotorControlMultiplexer(Node):
         self.nav_mode_client = None
         self.set_nav_mode(NAV_MODE.JOYSTICK)
 
-    # def nav_mode_state_change_callback(self, request, response):
-    #     self.get_logger().info('nav_mode_state_change_callback')
+    def process_global_setting_change(self, msg):
+        setting_name = msg.key
+        setting_value = msg.value
+
+        if setting_name == "nav-mode":
+            self.set_nav_mode(setting_value)
 
     def transition_nav_service_state(self, state):
         req = ChangeState.Request()
         req.transition = Transition(label=state)
         future = self.nav_mode_client.call_async(req)
-        #rclpy.spin_until_future_complete(self, future, timeout_sec=10)
+        # rclpy.spin_until_future_complete(self, future, timeout_sec=10)
         # future.wait(10)
         # self.get_logger().info("finishing 2")
         # return future.result() and future.result().success
@@ -93,9 +101,14 @@ class MotorControlMultiplexer(Node):
             else:
                 self.get_logger().info('Successfully transitioned to Nav Mode: %s' % nav_mode)
 
-    def process_nav_mode_change(self, string_msg):
-        mode = string_msg.data
-        self.set_nav_mode(mode)
+        self.set_global_setting("nav-mode", self.nav_mode, True)
+
+    def set_global_setting(self, name, value, temporary = False):
+        req = SetGlobalSetting.Request()
+        req.name = name
+        req.value = value
+        req.temporary = temporary
+        self.set_global_setting_client.call_async(req)
 
     def process_joystick_msg(self, joy_msg):
         # The joystick has moved, let's transition to joystick mode
@@ -121,7 +134,7 @@ class MotorControlMultiplexer(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    node = MotorControlMultiplexer()
+    node = NavController()
     executor = rclpy.executors.MultiThreadedExecutor()
     executor.add_node(node)
 

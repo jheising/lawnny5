@@ -8,13 +8,13 @@ launch:
 
   - include:
       file: "$(find-pkg-share rosbridge_server)/launch/rosbridge_websocket_launch.xml"
-#  - node:
-#      pkg: "lawnny5"
-#      exec: "global_settings_server"
-#      output: "screen"
   - node:
       pkg: "lawnny5"
-      exec: "motor_control_multiplexer"
+      exec: "global_settings_server"
+      output: "screen"
+  - node:
+      pkg: "lawnny5"
+      exec: "nav_controller"
       output: "screen"
   - node:
       pkg: "lawnny5"
@@ -24,10 +24,10 @@ launch:
       pkg: "lawnny5"
       exec: "follow_me_tracker"
       output: "screen"
-#  - node:
-#      pkg: "lawnny5"
-#      exec: "depth_ai_camera"
-#      output: "screen"
+  - node:
+      pkg: "lawnny5"
+      exec: "depth_ai_camera"
+      output: "screen"
 #  - node:
 #      pkg: "lawnny5"
 #      exec: "depth_ai_camera_uvc"

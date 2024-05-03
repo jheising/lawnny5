@@ -2,10 +2,10 @@ import rclpy
 from rclpy.lifecycle import Node
 from rclpy.lifecycle import State
 from rclpy.lifecycle import TransitionCallbackReturn
-from .lib.depthai_hand_tracker.HandController import HandController
 from .lib.pid import PID
 from geometry_msgs.msg import Twist
-from std_msgs.msg import String
+from lawnny5_interfaces.srv import SetString
+from lawnny5_interfaces.msg import ObjectTrack
 import pytweening
 
 HAND_SIZE_IN_M = 0.1778
@@ -47,58 +47,45 @@ class FollowMeTracker(Node):
     def __init__(self):
         super().__init__('follow_me_tracker')
 
-        self.hand_controller = None
         self.cmd_vel_publisher = None
-        self.timer = None
         self.last_recognition_event_time = None
         self.last_recognition_start_time = None
+        self.hand_tracking_subscription = None
+        self.camera_client = None
         self.twist_cmd = Twist()
 
         self.linear_pid = PID(LINEAR_PID_PARAMS[0], LINEAR_PID_PARAMS[1], LINEAR_PID_PARAMS[2], 5.0, -5.0)
         self.angular_pid = PID(ANGULAR_PID_PARAMS[0], ANGULAR_PID_PARAMS[1], ANGULAR_PID_PARAMS[2], 5.0, -5.0)
 
-        self.create_subscription(
-            String,
-            '/follow_me_tracker/pid/linear',
-            self.set_linear_pid,
-            1)
-
-        self.create_subscription(
-            String,
-            '/follow_me_tracker/pid/angular',
-            self.set_angular_pid,
-            1)
-
-    def set_linear_pid(self, msg):
-        self.get_logger().info("Setting new Linear PID values: %s" % msg.data)
-        components = msg.data.split(",")
-        self.linear_pid.set_gains(float(components[0]), float(components[1]), float(components[2]), float(components[3]), float(components[4]))
-        self.linear_pid.reset()
-
-    def set_angular_pid(self, msg):
-        self.get_logger().info("Setting new Angular PID values: %s" % msg.data)
-        components = msg.data.split(",")
-        self.angular_pid.set_gains(float(components[0]), float(components[1]), float(components[2]), float(components[3]), float(components[4]))
-        self.angular_pid.reset()
+    #     self.create_subscription(
+    #         String,
+    #         '/follow_me_tracker/pid/linear',
+    #         self.set_linear_pid,
+    #         1)
+    #
+    #     self.create_subscription(
+    #         String,
+    #         '/follow_me_tracker/pid/angular',
+    #         self.set_angular_pid,
+    #         1)
+    #
+    # def set_linear_pid(self, msg):
+    #     self.get_logger().info("Setting new Linear PID values: %s" % msg.data)
+    #     components = msg.data.split(",")
+    #     self.linear_pid.set_gains(float(components[0]), float(components[1]), float(components[2]), float(components[3]), float(components[4]))
+    #     self.linear_pid.reset()
+    #
+    # def set_angular_pid(self, msg):
+    #     self.get_logger().info("Setting new Angular PID values: %s" % msg.data)
+    #     components = msg.data.split(",")
+    #     self.angular_pid.set_gains(float(components[0]), float(components[1]), float(components[2]), float(components[3]), float(components[4]))
+    #     self.angular_pid.reset()
 
     def reset_movement(self):
         self.publish_twist(0.0, 0.0)
         self.linear_pid.reset()
         self.angular_pid.reset()
         self.last_recognition_start_time = None
-
-    def tick(self):
-
-        if self.hand_controller:
-            self.hand_controller.tick()
-
-        now = self.get_clock().now().nanoseconds
-
-        # If it's been a while since our last hand recognition, stop the robot and reset everything
-        if self.last_recognition_event_time and (now - self.last_recognition_event_time) >= MAX_MOVE_TIMEOUT_NS and (self.twist_cmd.angular.z != 0.0 or self.twist_cmd.linear.x != 0.0):
-            self.reset_movement()
-
-        return
 
     def publish_twist(self, linear_velocity, angular_velocity):
         self.twist_cmd.angular.z = angular_velocity
@@ -107,7 +94,7 @@ class FollowMeTracker(Node):
         if self.cmd_vel_publisher:
             self.cmd_vel_publisher.publish(self.twist_cmd)
 
-    def process_movement(self, event):
+    def process_movement(self, msg):
 
         now = self.get_clock().now().nanoseconds
         self.last_recognition_event_time = now
@@ -115,8 +102,8 @@ class FollowMeTracker(Node):
         if self.last_recognition_start_time is None:
             self.last_recognition_start_time = now
 
-        hand_y_coord_in_meters = convert_hand_size_to_y_distance_in_m(event.hand.rect_w_a, event.hand.rect_h_a)
-        hand_x_coord_in_meters = convert_hand_position_to_x_distance_in_m(hand_y_coord_in_meters, self.hand_controller.tracker.frame_size, event.hand.rect_x_center_a)
+        hand_y_coord_in_meters = convert_hand_size_to_y_distance_in_m(msg.width, msg.height)
+        hand_x_coord_in_meters = convert_hand_position_to_x_distance_in_m(hand_y_coord_in_meters, msg.bound_width, msg.x)
 
         linear_error = -(hand_y_coord_in_meters - FOLLOW_DISTANCE_IN_M)
         angular_error = -hand_x_coord_in_meters
@@ -129,13 +116,11 @@ class FollowMeTracker(Node):
         if ramp_time_percentage <= 1.0:
             ramp_multiplier = pytweening.easeInOutQuad(ramp_time_percentage)
             if abs(linear_velocity) >= LINEAR_PID_PARAMS[4] * 0.25:
-                self.get_logger().info("Ramping linear: %s" % ramp_multiplier)
+                # self.get_logger().info("Ramping linear: %s" % ramp_multiplier)
                 linear_velocity = linear_velocity * ramp_multiplier
             if abs(angular_velocity) >= ANGULAR_PID_PARAMS[4] * 0.25:
-                self.get_logger().info("Ramping angular: %s" % ramp_multiplier)
+                # self.get_logger().info("Ramping angular: %s" % ramp_multiplier)
                 angular_velocity = angular_velocity * ramp_multiplier
-
-        self.get_logger().info("Dist: %s, AV: %s, LV: %s" % (-(hand_y_coord_in_meters - FOLLOW_DISTANCE_IN_M), angular_velocity, linear_velocity))
 
         self.publish_twist(linear_velocity, angular_velocity)
 
@@ -146,41 +131,45 @@ class FollowMeTracker(Node):
     def on_configure(self, state: State) -> TransitionCallbackReturn:
         self.get_logger().info("Starting follow_me_tracker...")
 
-        config = {
-            'renderer': {'enable': False},
-            'pose_actions': [
-                {'name': 'ONE', 'pose': 'ONE', 'trigger': 'periodic', 'callback': self.hand_recognized},
-                # {'name': 'FIVE', 'pose': 'FIVE', 'trigger': 'periodic', 'callback': self.reset_movement},
-            ]
-        }
+        self.cmd_vel_publisher = self.create_publisher(Twist, 'cmd_vel', 1)
+        self.reset_movement()
 
-        try:
-            self.cmd_vel_publisher = self.create_publisher(Twist, 'cmd_vel', 1)
-            self.reset_movement()
-            self.hand_controller = HandController(config)
-            self.timer = self.create_timer(0.05, self.tick)
-        except Exception as e:
-            self.get_logger().error('Unable to create HandController: %s' % e)
-            return TransitionCallbackReturn.FAILURE
+        self.hand_tracking_subscription = self.create_subscription(
+            ObjectTrack,
+            'hand_tracking',
+            self.process_movement,
+            1)
+
+        self.camera_client = self.create_client(SetString, 'camera_mode')
+        while not self.camera_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Camera service not available, waiting again...')
+
+        req = SetString.Request()
+        req.data = "hand_tracker"
+        self.camera_client.call_async(req)
 
         return TransitionCallbackReturn.SUCCESS
 
     def on_cleanup(self, state: State) -> TransitionCallbackReturn:
         self.get_logger().info('Cleaning up follow_me_tracker...')
 
+        if self.hand_tracking_subscription:
+            self.destroy_subscription(self.hand_tracking_subscription)
+            self.hand_tracking_subscription = None
+
         self.reset_movement()
-
-        if self.timer:
-            self.destroy_timer(self.timer)
-            self.timer = None
-
-        if self.hand_controller:
-            del self.hand_controller
-            self.hand_controller = None
 
         if self.cmd_vel_publisher:
             self.destroy_publisher(self.cmd_vel_publisher)
             self.cmd_vel_publisher = None
+
+        if self.camera_client:
+            req = SetString.Request()
+            req.data = "none"
+            self.camera_client.call_async(req)
+
+            self.destroy_client(self.camera_client)
+            self.camera_client = None
 
         return TransitionCallbackReturn.SUCCESS
 
@@ -189,9 +178,14 @@ def main(args=None):
     rclpy.init(args=args)
 
     node = FollowMeTracker()
+    # executor = rclpy.executors.MultiThreadedExecutor()
+    # executor.add_node(node)
+
     try:
+        # executor.spin()
         rclpy.spin(node)
     finally:
+        # executor.shutdown()
         node.destroy_node()
         rclpy.shutdown()
 

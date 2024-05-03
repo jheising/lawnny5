@@ -12,8 +12,8 @@ DEFAULT_CONFIG = {
         "callback": "_DEFAULT_",
         "hand": "any",
         "trigger": "enter", 
-        "first_trigger_delay": 0.3,
-        "next_trigger_delay": 0.05,
+        "first_trigger_delay": 0.1,
+        "next_trigger_delay": 0.1,
         "max_missing_frames": 3,
     },
     'tracker': 

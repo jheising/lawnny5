@@ -24,11 +24,14 @@ class GlobalSettingsServer(Node):
         return response
 
     def get_setting_callback(self, request, response):
-        response.value = self.settings[request.name] or ""
+        try:
+            response.value = self.settings[request.name]
+        except:
+            response.value = "undefined"
         return response
 
     def set_setting_callback(self, request, response):
-        self.set_setting(request.name, request.value)
+        self.set_setting(request.name, request.value, request.temporary)
 
         kv_message = KeyValue()
         kv_message.key = request.name
@@ -42,18 +45,21 @@ class GlobalSettingsServer(Node):
             with open('lawnny-settings.json', 'r') as openfile:
                 self.settings = json.load(openfile)
         except:
-            return
+            self.settings = {}
 
-    def save_settings(self):
-        try:
-            with open('lawnny-settings.json', 'w') as outfile:
-                outfile.write(json.dumps(self.settings))
-        except:
-            return
+    def save_setting(self, name, value):
+        with open('lawnny-settings.json', 'w') as outfile:
+            try:
+                file_settings = json.load(outfile)
+            except:
+                file_settings = {}
+            file_settings[name] = value
+            outfile.write(json.dumps(file_settings))
 
-    def set_setting(self, name, value):
+    def set_setting(self, name, value, temporary):
         self.settings[name] = value
-        self.save_settings()
+        if not temporary:
+            self.save_setting(name, value)
 
 def main(args=None):
     rclpy.init(args=args)
