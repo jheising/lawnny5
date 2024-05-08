@@ -1,9 +1,10 @@
 import { StyleSheet, View } from "react-native";
-import { Page, Themes, Field, Switch, ProgressCircle, Group, Dropdown, Button, Option } from "odyssey-ui";
+import { Page, Themes, Field, Switch, ProgressCircle, Group, Dropdown, Button, Option, Text } from "odyssey-ui";
 import { Joypad, JoystickPosition } from "./Joypad";
 import { useEffect, useRef, useState } from "react";
 import { UseROSDispatch } from "../hooks/useROS";
 import { Message, Topic } from "roslib";
+import { VideoDisplay } from "./VideoDisplay";
 
 export interface ControllerProps {
     ros: UseROSDispatch;
@@ -23,6 +24,7 @@ export function Controller(props: ControllerProps) {
     const yPercent = Math.round((joystickPosition?.yPercent ?? 0) * 100);
 
     const [navMode, setNavMode] = useState<NavModeOption | undefined>();
+    const [forwardDirection, setForwardDirection] = useState(true);
     const joystickPublisher = useRef<Topic>();
 
     useEffect(() => {
@@ -38,10 +40,6 @@ export function Controller(props: ControllerProps) {
             return props.ros.onSettingChange(handleSettingChange);
         }
     }, [props.ros.isConnected]);
-
-    useEffect(() => {
-
-    }, [navMode]);
 
     async function loadSettings() {
         handleSettingChange("nav-mode", await props.ros.getSetting<NavMode>("nav-mode"));
@@ -59,8 +57,16 @@ export function Controller(props: ControllerProps) {
     function handleJoystickMove(position?: JoystickPosition) {
         setJoystickPosition(position);
         if (joystickPublisher.current && position) {
+
+            let xAxis = position.xPercent;
+            let yAxis = position.yPercent;
+
+            if (!forwardDirection) {
+                yAxis = -yAxis;
+            }
+
             joystickPublisher.current.publish(new Message({
-                axes: [position.xPercent, position.xPercent],
+                axes: [xAxis, yAxis],
                 buttons: []
             }));
         }
@@ -74,13 +80,17 @@ export function Controller(props: ControllerProps) {
 
     return <View style={{ minHeight: "100%", width: "100%", maxWidth: 1024, padding: 10, paddingBottom: 0 }}>
         <Page title="LNE5" description="VITA AG SYSTEMS L-SERIES MK5">
-            <View style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
+            <Group style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
                 <View style={{ flex: 1 }}>
+                    {props.ros.ros && <VideoDisplay style={{ flex: 1 }} ros={props.ros.ros} />}
                 </View>
-                <Group direction="vertical" title="NAV MODE">
+                <Group direction="vertical">
+                    <Text>NAV MODE</Text>
                     <Dropdown placeholderText="NAV MD" value={navMode} options={NAV_MODE_OPTIONS} onChange={handleNavModeChange} />
+                    <Text>DIRECTION</Text>
+                    <Switch offTitle="REV" onTitle="FWD" value={forwardDirection} onChange={setForwardDirection} />
                     <Field label="JOYPAD">
-                        <View style={{ height: 300 }}>
+                        <View style={{ height: 200 }}>
                             <Joypad style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} onMove={handleJoystickMove} />
                             {/*<Animated.View style={[{*/}
                             {/*    position: "absolute",*/}
@@ -100,9 +110,9 @@ export function Controller(props: ControllerProps) {
                             </View>
                         </View>
                     </Field>
-                    <Button title="ESTOP" colorVariant="warn" />
+                    {/*<Button title="ESTOP" colorVariant="warn" />*/}
                 </Group>
-            </View>
+            </Group>
         </Page>
     </View>;
 }

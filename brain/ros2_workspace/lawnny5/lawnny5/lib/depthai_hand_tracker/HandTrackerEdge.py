@@ -214,12 +214,13 @@ class HandTracker:
         
         # Define and start pipeline
         usb_speed = self.device.getUsbSpeed()
-        self.device.startPipeline(self.create_pipeline())
+        self.pipeline = self.create_pipeline()
+        self.device.startPipeline(self.pipeline)
         print(f"Pipeline started - USB speed: {str(usb_speed).split('.')[-1]}")
 
         # Define data queues 
         if not self.laconic:
-            self.q_video = self.device.getOutputQueue(name="cam_out", maxSize=1, blocking=False)
+            self.q_video = self.device.getOutputQueue(name="mjpeg", maxSize=1, blocking=False)
         self.q_manager_out = self.device.getOutputQueue(name="manager_out", maxSize=1, blocking=False)
         # For showing outputs of ImageManip nodes (debugging)
         if self.trace & 4:
@@ -263,11 +264,12 @@ class HandTracker:
             cam.setPreviewSize(self.img_w, self.img_h)
 
         if not self.laconic:
-            cam_out = pipeline.createXLinkOut()
-            cam_out.setStreamName("cam_out")
-            cam_out.input.setQueueSize(1)
-            cam_out.input.setBlocking(False)
-            cam.video.link(cam_out.input)
+            video_enc = pipeline.create(dai.node.VideoEncoder)
+            video_enc.setDefaultProfilePreset(self.internal_fps, dai.VideoEncoderProperties.Profile.MJPEG)
+            cam.video.link(video_enc.input)
+            cam_out = pipeline.create(dai.node.XLinkOut)
+            cam_out.setStreamName("mjpeg")
+            video_enc.bitstream.link(cam_out.input)
 
         # Define manager script node
         manager_script = pipeline.create(dai.node.Script)

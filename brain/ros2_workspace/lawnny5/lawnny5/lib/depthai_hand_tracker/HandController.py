@@ -21,7 +21,7 @@ DEFAULT_CONFIG = {
         'version': 'edge',
         'args': 
         {
-            'input_src': 'rgb_laconic',
+            # 'input_src': 'rgb_laconic',
             'pd_score_thresh': 0.6,
             'pd_nms_thresh': 0.3,
             'lm_score_thresh': 0.5, 
