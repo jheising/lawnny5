@@ -4,7 +4,8 @@ RUN sudo apt-get update -y # && sudo apt-get upgrade -y -f
 RUN sudo apt-get install -y -f ros-humble-rosbridge-suite \
     python3-colcon-common-extensions \
     python3-pip \
-    ffmpeg libsm6 libxext6
+    ffmpeg libsm6 libxext6 \
+    bluez bluetooth
 
 RUN mkdir -p /root/lawnny5/src
 

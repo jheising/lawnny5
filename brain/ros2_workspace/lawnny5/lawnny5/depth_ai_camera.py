@@ -3,11 +3,6 @@ from rclpy.node import Node
 from .lib.depthai_hand_tracker.HandController import HandController
 from lawnny5_interfaces.msg import ObjectTrack
 from lawnny5_interfaces.srv import SetString
-from std_msgs.msg import String
-import depthai as dai
-from sensor_msgs.msg import CompressedImage
-import numpy as np
-
 
 CAMERA_FPS = 24
 
@@ -28,8 +23,8 @@ class DepthAICamera(Node):
         self.has_camera_subscriber = False
 
         self.mode_service = self.create_service(SetString, 'camera_mode', self.camera_mode_callback)
-        self.compressed_image_publisher = self.create_publisher(CompressedImage, 'camera/color/bgr', 1)
-        self.subscriber_timer = self.create_timer(1.0, self.check_image_subscriber_count)
+        # self.compressed_image_publisher = self.create_publisher(CompressedImage, 'camera/color/bgr', 1)
+        # self.subscriber_timer = self.create_timer(1.0, self.check_image_subscriber_count)
 
     def __del__(self):
         self.cleanup()
@@ -129,21 +124,21 @@ class DepthAICamera(Node):
         if self.camera_started:
             return
 
-        if self.camera_output_queue:
-            self.camera_started = True
-            self.get_logger().info("Starting DepthAI Camera Feed...")
-            self.frame_timer = self.create_timer(1.0 / CAMERA_FPS, self.process_camera_frame)
+        # if self.camera_output_queue:
+        #     self.camera_started = True
+        #     self.get_logger().info("Starting DepthAI Camera Feed...")
+        #     self.frame_timer = self.create_timer(1.0 / CAMERA_FPS, self.process_camera_frame)
 
     def process_camera_frame(self):
 
         if not self.camera_output_queue:
             return
 
-        msg = CompressedImage()
-        msg.header.stamp = self.get_clock().now().to_msg()
-        msg.format = "jpeg"
-        msg.data = np.array(self.camera_output_queue.get().getData()).tobytes()
-        self.compressed_image_publisher.publish(msg)
+        # msg = CompressedImage()
+        # msg.header.stamp = self.get_clock().now().to_msg()
+        # msg.format = "jpeg"
+        # msg.data = np.array(self.camera_output_queue.get().getData()).tobytes()
+        # self.compressed_image_publisher.publish(msg)
 
 def main(args=None):
     rclpy.init(args=args)

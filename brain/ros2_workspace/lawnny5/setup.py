@@ -18,6 +18,7 @@ setup(
         (os.path.join('lib', package_name, 'resource'), glob('resource/*', recursive=True)),
         (os.path.join('share', package_name, 'resource'), glob('resource/*', recursive=True)),
         (os.path.join('share', package_name, 'worlds'), glob('worlds/*', recursive=True)),
+        (os.path.join('share', package_name, 'sounds'), glob('sounds/*', recursive=True)),
         (os.path.join('share', package_name, 'launch'), glob(os.path.join('launch', '*launch.[pxy][yma]*'))),
     ],
     install_requires=['setuptools'],
@@ -33,11 +34,14 @@ setup(
             'nav_controller = lawnny5.nav_controller:main',
             'sabertooth_mixed_controller = lawnny5.sabertooth_mixed_controller:main',
             'sabertooth_driver = lawnny5.sabertooth_driver:main',
+            'ugv01_driver = lawnny5.ugv01_driver:main',
             'depth_ai_camera = lawnny5.depth_ai_camera:main',
             'depth_ai_camera_uvc = lawnny5.depth_ai_camera_uvc:main',
             'web_control_ui = lawnny5.web_control_ui:main',
             'webots_driver = lawnny5.webots_driver:main',
             'follow_me_tracker = lawnny5.follow_me_tracker:main',
+            'sound_player = lawnny5.sound_player:main',
+            'personality_engine = lawnny5.personality_engine:main'
         ],
     },
 )

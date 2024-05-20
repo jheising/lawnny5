@@ -13,6 +13,7 @@ PERCEIVED_FOCAL_LENGTH = 1303.0
 FOLLOW_DISTANCE_IN_M = 1.0
 MAX_MOVE_TIMEOUT_NS = 5e+8  # half a second
 
+USE_RAMP = True
 MOVEMENT_RAMP_TIME_IN_NS = 1.5e+9  # 1.5 seconds
 
 LINEAR_PID_PARAMS = [1.5,  # P
@@ -21,8 +22,13 @@ LINEAR_PID_PARAMS = [1.5,  # P
                      0.0,  # MIN
                      0.8]  # MAX
 
-ANGULAR_PID_PARAMS = [4.0,  # P
-                      1.0,  # I
+# ANGULAR_PID_PARAMS = [4.0,  # P
+#                       1.0,  # I
+#                       0.0,  # D
+#                       -1.5,  # MIN
+#                       1.5]  # MAX
+ANGULAR_PID_PARAMS = [1.5,  # P
+                      0.0,  # I
                       0.0,  # D
                       -1.5,  # MIN
                       1.5]  # MAX
@@ -57,6 +63,8 @@ class FollowMeTracker(Node):
         self.linear_pid = PID(LINEAR_PID_PARAMS[0], LINEAR_PID_PARAMS[1], LINEAR_PID_PARAMS[2], 5.0, -5.0)
         self.angular_pid = PID(ANGULAR_PID_PARAMS[0], ANGULAR_PID_PARAMS[1], ANGULAR_PID_PARAMS[2], 5.0, -5.0)
 
+        self.publisher_timer = None
+
     #     self.create_subscription(
     #         String,
     #         '/follow_me_tracker/pid/linear',
@@ -85,6 +93,7 @@ class FollowMeTracker(Node):
         self.publish_twist(0.0, 0.0)
         self.linear_pid.reset()
         self.angular_pid.reset()
+        self.last_recognition_event_time = None
         self.last_recognition_start_time = None
 
     def publish_twist(self, linear_velocity, angular_velocity):
@@ -94,7 +103,19 @@ class FollowMeTracker(Node):
         if self.cmd_vel_publisher:
             self.cmd_vel_publisher.publish(self.twist_cmd)
 
-    def process_movement(self, msg):
+    def publish_cmd_vel(self):
+        if self.last_recognition_event_time is None:
+            return
+
+        now = self.get_clock().now().nanoseconds
+        if now - self.last_recognition_event_time > MAX_MOVE_TIMEOUT_NS:
+            self.reset_movement()
+            return
+
+        if self.cmd_vel_publisher:
+            self.cmd_vel_publisher.publish(self.twist_cmd)
+        
+    def process_hand_recognition(self, msg):
 
         now = self.get_clock().now().nanoseconds
         self.last_recognition_event_time = now
@@ -112,21 +133,23 @@ class FollowMeTracker(Node):
         angular_velocity = clamp(self.angular_pid.update_PID(angular_error), ANGULAR_PID_PARAMS[3], ANGULAR_PID_PARAMS[4])
 
         # Ramp our movement if there is a large amount of error to start with— this prevents jerking.
-        ramp_time_percentage = (now - self.last_recognition_start_time) / MOVEMENT_RAMP_TIME_IN_NS
-        if ramp_time_percentage <= 1.0:
-            ramp_multiplier = pytweening.easeInOutQuad(ramp_time_percentage)
-            if abs(linear_velocity) >= LINEAR_PID_PARAMS[4] * 0.25:
-                # self.get_logger().info("Ramping linear: %s" % ramp_multiplier)
-                linear_velocity = linear_velocity * ramp_multiplier
-            if abs(angular_velocity) >= ANGULAR_PID_PARAMS[4] * 0.25:
-                # self.get_logger().info("Ramping angular: %s" % ramp_multiplier)
-                angular_velocity = angular_velocity * ramp_multiplier
+        if USE_RAMP:
+            ramp_time_percentage = (now - self.last_recognition_start_time) / MOVEMENT_RAMP_TIME_IN_NS
+            if ramp_time_percentage <= 1.0:
+                ramp_multiplier = pytweening.easeInOutQuad(ramp_time_percentage)
+                if abs(linear_velocity) >= LINEAR_PID_PARAMS[4] * 0.25:
+                    # self.get_logger().info("Ramping linear: %s" % ramp_multiplier)
+                    linear_velocity = linear_velocity * ramp_multiplier
+                if abs(angular_velocity) >= ANGULAR_PID_PARAMS[4] * 0.25:
+                    # self.get_logger().info("Ramping angular: %s" % ramp_multiplier)
+                    angular_velocity = angular_velocity * ramp_multiplier
 
-        self.publish_twist(linear_velocity, angular_velocity)
+        self.twist_cmd.angular.z = angular_velocity
+        self.twist_cmd.linear.x = 0.0 #linear_velocity
 
     def hand_recognized(self, event):
         if event.hand.gesture == "ONE":
-            self.process_movement(event)
+            self.process_hand_recognition(event)
 
     def on_configure(self, state: State) -> TransitionCallbackReturn:
         self.get_logger().info("Starting follow_me_tracker...")
@@ -137,7 +160,7 @@ class FollowMeTracker(Node):
         self.hand_tracking_subscription = self.create_subscription(
             ObjectTrack,
             'hand_tracking',
-            self.process_movement,
+            self.process_hand_recognition,
             1)
 
         self.camera_client = self.create_client(SetString, 'camera_mode')
@@ -148,10 +171,16 @@ class FollowMeTracker(Node):
         req.data = "hand_tracker"
         self.camera_client.call_async(req)
 
+        self.publisher_timer = self.create_timer(0.05, self.publish_cmd_vel)
+
         return TransitionCallbackReturn.SUCCESS
 
     def on_cleanup(self, state: State) -> TransitionCallbackReturn:
         self.get_logger().info('Cleaning up follow_me_tracker...')
+
+        if self.publisher_timer:
+            self.destroy_timer(self.publisher_timer)
+            self.publisher_timer = None
 
         if self.hand_tracking_subscription:
             self.destroy_subscription(self.hand_tracking_subscription)

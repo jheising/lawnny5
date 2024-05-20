@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Simulator" type="docker-deploy" factoryName="dockerfile" server-name="Debian UTM">
+  <configuration default="false" name="Simulator" type="docker-deploy" factoryName="dockerfile" server-name="Lawnny5 RPI">
     <deployment type="dockerfile">
       <settings>
         <option name="imageTag" value="lawnny5-ros-sim" />

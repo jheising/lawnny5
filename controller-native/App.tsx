@@ -21,8 +21,8 @@ export default function App() {
 
     useEffect(() => {
         // Automatically connect to the ROS server running on this device when the page loads
-        // setROSURL(`ws://${document.location.hostname}:${DEFAULT_ROS_PORT}`);
-        setROSURL(`ws://debian.local:${DEFAULT_ROS_PORT}`);
+        setROSURL(`ws://${document.location.hostname}:${DEFAULT_ROS_PORT}`);
+        //setROSURL(`ws://debian.local:${DEFAULT_ROS_PORT}`);
     }, []);
 
     return (<Theme theme={{
