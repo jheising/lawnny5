@@ -3,36 +3,41 @@ FROM ros:humble-ros-base-jammy
 RUN sudo apt-get update -y # && sudo apt-get upgrade -y -f
 RUN sudo apt-get install -y -f  \
     ros-humble-rosbridge-suite \
+    ros-humble-rclpy-message-converter \
     python3-colcon-common-extensions \
     python3-pip \
-    bluetooth bluez-alsa-utils mpg321 # \
+    bluetooth bluez-alsa-utils mpg123 # \
     # ros-humble-webots-ros2 iproute2
 
 RUN mkdir -p /root/lawnny5/src
+RUN mkdir -p /root/lawnny5/cache
 
 ## Make sure ROS is always setup when loading our shell
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 
 ENV WEBOTS_SHARED_FOLDER=/Users/jheising/Documents/Development/personal/lawnny5/development/brain/ros2_workspace/shared:/root/lawnny5/src/shared
 ENV LAWNNY5_ROOT="/root/lawnny5/src"
+ENV LAWNNY5_CACHE="/root/lawnny5/cache"
 
 WORKDIR /root/lawnny5
 
 #RUN virtualenv -p python3 ./.venv
 #RUN source ./.venv/bin/activate
 # We have to lock depthai to 2.20.2 because of this issue https://github.com/geaxgx/depthai_blazepose/issues/37
-RUN python3 -m pip install pysabertooth depthai==2.20.2 opencv-python pytweening mpyg321 openai
+RUN python3 -m pip install pysabertooth depthai==2.20.2 opencv-python pytweening mpyg321 openai requests python-benedict
+
+# RUN colcon build && source install/local_setup.bash
 
 # https://www.theconstruct.ai/ros2-how-to-install-third-party-python-packages-using-ros2-5/
 
 # sudo mount -t cifs //192.168.1.30/lawnny5 /home/lawnny5/src -o username=jimheising,sec=ntlmssp,nounix
-# docker run -d -i -t -v /home/debian/lawnny5/src:/root/lawnny5/src -v /dev/bus/usb:/dev/bus/usb -v /run/dbus:/run/dbus:rw --name lawnny5-ros-sim --rm --network host --device-cgroup-rule='c 189:* rmw' --privileged lawnny5-ros-sim:latest
+# docker run -d -i -t -v /home/debian/lawnny5/src:/root/lawnny5/src -v /home/lawnny5/cache:/root/lawnny5/cache -v /dev/bus/usb:/dev/bus/usb -v /run/dbus:/run/dbus --name lawnny5-ros-sim --rm --network host --device-cgroup-rule='c 189:* rmw' --privileged lawnny5-ros-sim:latest
 
 # sudo mount -t cifs //192.168.1.6/development /home/lawnny5/src -o username=jheising,sec=ntlmssp,nounix
-# docker run -d -i -t -v /home/lawnny5/src/brain/ros2_workspace:/root/lawnny5/src -v /dev/bus/usb:/dev/bus/usb -v /run/dbus:/run/dbus:rw --name lawnny5-ros-sim --rm --network host --device-cgroup-rule='c 189:* rmw' --privileged lawnny5-ros-sim:latest
+# docker run -d -i -t -v /home/lawnny5/src/brain/ros2_workspace:/root/lawnny5/src -v /home/lawnny5/cache:/root/lawnny5/cache -v /dev/bus/usb:/dev/bus/usb -v /run/dbus:/run/dbus --name lawnny5-ros-sim --rm --network host --device-cgroup-rule='c 189:* rmw' --privileged lawnny5-ros-sim:latest
 
-# colcon build && source install/local_setup.bash
-# ros2 launch lawnny5 robotulate_launch.yaml
+# RUN history -s colcon build && source install/local_setup.bash
+# RUN history -s ros2 launch lawnny5 robotulate_launch.yaml
 
 # CMD . /opt/ros/humble/setup.bash && . install/local_setup.bash && ros2 launch lawnny5 simulate_launch.py
 
@@ -42,9 +47,4 @@ RUN python3 -m pip install pysabertooth depthai==2.20.2 opencv-python pytweening
 
 # ros2 launch webots_ros2_universal_robot multirobot_launch.py
 
-# sudo bluealsa
-# sudo service dbus restart
-# sudo bluetoothd
-# sudo service bluetooth restart
-# aplay -D bluealsa
-# mpg123 -a bluealsa
+# ros2 topic pub --once /personality/chat_input std_msgs/String "data: Hey there!"

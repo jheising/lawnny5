@@ -8,7 +8,7 @@ setup(
     name=package_name,
     version='0.0.0',
     packages=find_packages(exclude=['test']),
-    package_data={"": ["*.blob", "*.py.templ", "*.mp3"]},
+    package_data={"": ["*.blob", "*.py.templ", "*.mp3", "*.json"]},
     include_package_data=True,
     data_files=[
         (os.path.join('share', package_name, 'config'), glob('config/*', recursive=True)),
@@ -19,6 +19,7 @@ setup(
         (os.path.join('share', package_name, 'resource'), glob('resource/*', recursive=True)),
         (os.path.join('share', package_name, 'worlds'), glob('worlds/*', recursive=True)),
         (os.path.join('share', package_name, 'sounds'), glob('sounds/*', recursive=True)),
+        (os.path.join('share', package_name, 'moves'), glob('moves/*', recursive=True)),
         (os.path.join('share', package_name, 'launch'), glob(os.path.join('launch', '*launch.[pxy][yma]*'))),
     ],
     install_requires=['setuptools'],
@@ -40,8 +41,9 @@ setup(
             'web_control_ui = lawnny5.web_control_ui:main',
             'webots_driver = lawnny5.webots_driver:main',
             'follow_me_tracker = lawnny5.follow_me_tracker:main',
-            'sound_player = lawnny5.sound_player:main',
-            'personality_engine = lawnny5.personality_engine:main'
+            'sound_engine = lawnny5.sound_engine:main',
+            'personality_engine = lawnny5.personality_engine:main',
+            'topic_scripter = lawnny5.topic_scripter:main'
         ],
     },
 )

@@ -53,7 +53,7 @@ class SabertoothController(Node):
 
     def stop(self):
         if self.sabertooth_controller:
-            self.sabertooth_controller.stop()
+            self.sabertooth_controller.stop_movement()
             self.sabertooth_controller.close()
             self.sabertooth_controller = None
 

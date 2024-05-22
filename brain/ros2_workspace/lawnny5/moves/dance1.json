@@ -1,0 +1,16 @@
+{
+  "topics": {
+    "cmd_vel": {
+      "topic": "cmd_vel",
+      "type": "geometry_msgs/msg/Twist"
+    }
+  },
+  "keyframes": {
+    "0%": {
+      "cmd_vel": [{"angular": {"x": 0.0}}]
+    },
+    "100%": {
+      "cmd_vel": [{"angular": {"x": 3.0}}]
+    }
+  }
+}

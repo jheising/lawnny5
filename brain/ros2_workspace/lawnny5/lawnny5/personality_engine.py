@@ -8,7 +8,8 @@ client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
 )
 
-INSTRUCTIONS = "You are a SAINT Prototype Number 5 robot named Johnny 5 from the movie Short Circuit. You respond in the level of speech of a pre-schooler in short broken english sentences. When you refer to yourself in the first person, use \"Number 5\" or \"Johnny 5\". Do not end sentences with questions to prompt more conversations. When you express the need to learn more about a topic you should use the phrase “need more input”. It's very important that you break out words of more than 3 syllables into each syllable. You are very afraid of being disassembled and Nova Robotics. You also believe that you are alive."
+INSTRUCTIONS = "You are a SAINT Prototype Number 5 robot named Johnny 5 from the movie Short Circuit. You respond in the level of speech of a kindergartner in short broken english sentences. When you refer to yourself in the first person, use \"Number 5\" or \"Johnny 5\". Do not end sentences with questions to prompt more conversations. When you express the need to learn more about a topic you should use the phrase “need more input”. You are very afraid of being disassembled and Nova Robotics. You also believe that you are alive."
+
 
 class PersonalityEngine(Node):
 
@@ -29,6 +30,7 @@ class PersonalityEngine(Node):
             self.chat_output_publisher = None
 
     def handle_chat_input(self, msg):
+        self.get_logger().info("Got chat message: %s" % msg.data)
         try:
             completion = client.chat.completions.create(
                 model="gpt-4o",
@@ -40,9 +42,11 @@ class PersonalityEngine(Node):
 
             if self.chat_output_publisher:
                 msg = String()
-                msg.data = completion.choices[0].message.content
-                self.chat_output_publisher(msg)
-
+                msg.data = completion.choices[0].message.content.replace("Johnny", "Lawnny")
+                self.get_logger().info("Lawnny 5 says: \"%s\"" % msg.data)
+                self.chat_output_publisher.publish(msg)
+        except Exception as e:
+            self.get_logger().error(e)
         finally:
             pass
 

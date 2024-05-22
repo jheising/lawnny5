@@ -7,12 +7,14 @@ from lifecycle_msgs.msg import Transition
 from rclpy.callback_groups import ReentrantCallbackGroup
 from diagnostic_msgs.msg import KeyValue
 from lawnny5_interfaces.srv import SetGlobalSetting
+from std_msgs.msg import String
 from enum import Enum
 
 
 class NAV_MODE(str, Enum):
     JOYSTICK = 'JOYSTICK'
     FOLLOW_ME = 'FOLLOW_ME'
+    DIRECT = 'DIRECT'
 
 
 class NavController(Node):
@@ -23,23 +25,29 @@ class NavController(Node):
         self.global_settings_cb_group = ReentrantCallbackGroup()
 
         # Listen for cmd_vel commands
-        self.cmd_vel_subscription = self.create_subscription(
+        self.create_subscription(
             Twist,
             'cmd_vel',
             self.process_cmd_vel_msg,
             1)
 
-        self.joy_cmd_subscription = self.create_subscription(
+        self.create_subscription(
             Joy,
             'joy',
             self.process_joystick_msg,
+            1)
+
+        self.create_subscription(
+            String,
+            'nav_mode',
+            self.process_nav_mode_message,
             1)
 
         self.global_setting_subscription = self.create_subscription(
             KeyValue,
             'global_setting_updated',
             self.process_global_setting_change,
-            10, callback_group=self.global_settings_cb_group)
+            1, callback_group=self.global_settings_cb_group)
 
         self.set_global_setting_client = self.create_client(SetGlobalSetting, 'set_setting')
 
@@ -49,6 +57,9 @@ class NavController(Node):
         self.nav_mode = None
         self.nav_mode_client = None
         self.set_nav_mode(NAV_MODE.JOYSTICK)
+
+    def process_nav_mode_message(self, msg):
+        self.set_nav_mode(msg.data)
 
     def process_global_setting_change(self, msg):
         setting_name = msg.key
@@ -89,6 +100,8 @@ class NavController(Node):
             pass
         elif nav_mode == NAV_MODE.FOLLOW_ME:
             self.nav_mode_client = self.create_client(ChangeState, '/follow_me_tracker/change_state')
+        elif nav_mode == NAV_MODE.DIRECT:
+            pass
         else:
             self.get_logger().error('No Nav Mode: %s' % nav_mode)
 
@@ -102,7 +115,7 @@ class NavController(Node):
 
         self.set_global_setting("nav-mode", self.nav_mode, True)
 
-    def set_global_setting(self, name, value, temporary = False):
+    def set_global_setting(self, name, value, temporary=False):
         req = SetGlobalSetting.Request()
         req.name = name
         req.value = value
