@@ -1,160 +1,99 @@
 import rclpy
 from rclpy.node import Node
 from ament_index_python.packages import get_package_share_directory
-from std_msgs.msg import String
 import json
-from geometry_msgs.msg import Twist
+from .lib.keyframe_interpreter.KeyframeInterpreter import KeyframeInterpreter
+from std_msgs.msg import String
 from rclpy_message_converter import message_converter
-import pytweening
-from benedict import benedict
 
-MOVEMENT_PUBLISH_RATE_IN_MS = 100
-
-
-def is_number(value):
-    return isinstance(value, (int, float))
-
-
-def tween_object_values(start_object, end_object, tween_value):
-    object1_keys = start_object.keys()
-    object2_keys = end_object.keys()
-    result = {}
-
-    for key in object2_keys:
-
-        obj2_value = end_object[key]
-        result[key] = obj2_value
-
-        if key in object1_keys:
-            obj1_value = start_object[key]
-
-            if isinstance(obj1_value, dict) and isinstance(obj2_value, dict):
-                result[key] = tween_object_values(obj1_value, obj2_value, tween_value)
-            elif is_number(obj1_value) and is_number(obj2_value):
-                result[key] = obj1_value + ((obj2_value - obj1_value) * tween_value)
-
-    return result
-
+DEFAULT_FRAME_RATE_IN_MS = 100
 
 class TopicScripter(Node):
 
     def __init__(self):
         super().__init__("topic_scripter")
 
-        self.moves = None
-        self.current_move_index = -1
-        self.move_start_time = None
+        self.current_script = None
+        self.current_script_interpreter = None
+        self.current_topic_publishers = {}
         self.frame_timer = None
+        self.script_start_time = None
 
-        self.moves_dir = get_package_share_directory('lawnny5') + '/moves'
+        self.scripts_dir = get_package_share_directory('lawnny5') + '/moves'
 
         self.create_subscription(
             String,
-            'motion/play_by_name',
-            self.handle_play_move_by_name,
+            'topic_script/play_by_name',
+            self.handle_play_script_by_name,
             1)
 
-        self.cmd_vel_publisher = self.create_publisher(Twist, "cmd_vel", 1)
-        self.nav_mode_publisher = self.create_publisher(String, "nav_mode", 1)
-
-        self.play_move_by_name("dance1")
+        self.play_script_by_name("dance1")
 
     def __del__(self):
-        self.stop_movement()
+        self.stop_script()
 
-    def handle_play_move_by_name(self, msg):
-        self.play_move_by_name(msg.data)
+    def handle_play_script_by_name(self, msg):
+        self.play_script_by_name(msg.data)
 
-    def play_move_by_name(self, move_name):
-        self.play_move_file(self.moves_dir + "/" + move_name + ".json")
+    def play_script_by_name(self, move_name):
+        self.play_script_file(self.scripts_dir + "/" + move_name + ".json")
 
-    def play_move_file(self, filename):
+    def play_script_file(self, filename):
         file_data = open(filename)
         move_data = json.load(file_data)
-        self.play_moves(move_data)
+        self.play_script(move_data)
 
-    def stop_movement(self):
+    def stop_script(self):
 
         if self.frame_timer:
             self.destroy_timer(self.frame_timer)
             self.frame_timer = None
 
-        self.moves = None
-        self.current_move_index = -1
-        self.move_start_time = None
-        self.publish_twist_movement_dict({"linear": {"x": 0, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0}})
-        self.get_logger().info("Movement stopped")
+        self.current_script = None
+        self.current_script_interpreter = None
+        self.script_start_time = None
 
-    def publish_twist_movement_dict(self, twist_dict):
-        msg = message_converter.convert_dictionary_to_ros_message('geometry_msgs/msg/Twist', twist_dict)
-        if self.cmd_vel_publisher:
-            self.cmd_vel_publisher.publish(msg)
+        for publisher in self.current_topic_publishers.values():
+            self.destroy_publisher(publisher)
 
-    def play_moves(self, moves):
-        self.stop_movement()
-        self.moves = moves
-        nav_mode_msg = String()
-        nav_mode_msg.data = "DIRECT"
-        self.nav_mode_publisher.publish(nav_mode_msg)
-        self.play_next_move()
+        self.current_topic_publishers = {}
 
-    def start_frame_timer(self):
-        if not self.frame_timer:
-            self.frame_timer = self.create_timer(MOVEMENT_PUBLISH_RATE_IN_MS / 1000.0, self.process_movement_frame)
+    def play_script(self, script):
+        self.stop_script()
+        self.current_script = script
 
-    def play_next_move(self):
+        # Create publishers for all of our topics
+        topics = script["topics"]
+        for topic_key in topics.keys():
+            topic = topics[topic_key]
+            msg = message_converter.convert_dictionary_to_ros_message(topic["type"], {})
+            self.current_topic_publishers[topic_key] = self.create_publisher(type(msg), topic["topic"], 1)
 
-        self.move_start_time = None
-        self.current_move_index = self.current_move_index + 1
+        script_keyframes = script["keyframes"]
 
-        if not self.moves or self.current_move_index >= len(self.moves):
-            self.stop_movement()
-            return
+        self.current_script_interpreter = KeyframeInterpreter(script_keyframes)
 
-        current_move = self.moves[self.current_move_index]
-        self.move_start_time = self.get_clock().now().nanoseconds
+        self.script_start_time = self.get_clock().now().nanoseconds
+        framerate = script.get("framerate") or DEFAULT_FRAME_RATE_IN_MS
+        self.frame_timer = self.create_timer(framerate / 1000.0, self._process_frame)
 
-        self.get_logger().info("Playing step: %s" % current_move)
-
-        if current_move.get("type") == "move":
-            self.process_movement_frame()
-            self.start_frame_timer()
-        else:
-            self.play_next_move()
-
-    def process_movement_frame(self):
-        if self.moves is None or self.current_move_index == -1 or not self.move_start_time:
-            return
-
-        current_move_config = benedict(self.moves[self.current_move_index])["config"]
-        previous_move_config = benedict(self.moves[self.current_move_index - 1])["config"]
-
+    def _process_frame(self):
         now = self.get_clock().now().nanoseconds
-        delta_in_ms = (now - self.move_start_time) / 1000000
+        elapsed_ms = (now - self.script_start_time) / 1000000
+        script_duration = self.current_script["duration"]
+        elapsed_percentage = elapsed_ms / script_duration
 
-        tween_duration = current_move_config.get("duration") or 0
+        new_messages = self.current_script_interpreter.play(elapsed_percentage)
 
-        tween_percent = 0
+        for message in new_messages:
+            publisher = self.current_topic_publishers.get(message["type"])
+            if publisher:
+                message_type = self.current_script["topics"][message["type"]]["type"]
+                msg = message_converter.convert_dictionary_to_ros_message(message_type, message["msg"])
+                publisher.publish(msg)
 
-        if tween_duration > 0:
-            tween_percent = delta_in_ms / tween_duration
-
-        tween_function = getattr(pytweening, current_move_config.get("transition") or "linear")
-        tween_value = tween_function(tween_percent)
-
-        current_twist = current_move_config.get("twist")
-        if current_twist:
-            to_twist = current_twist
-            if tween_duration > 0 and previous_move_config:
-                from_twist = previous_move_config.get("twist")
-                if from_twist:
-                    to_twist = tween_object_values(from_twist, to_twist, tween_value)
-
-            self.publish_twist_movement_dict(to_twist)
-
-        if delta_in_ms > tween_duration:
-            self.play_next_move()
-            return
+        if elapsed_percentage >= 1.0:
+            self.stop_script()
 
 
 def main(args=None):

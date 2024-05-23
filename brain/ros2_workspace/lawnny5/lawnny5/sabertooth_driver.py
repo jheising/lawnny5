@@ -1,6 +1,5 @@
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Point
 from std_msgs.msg import Bool
 from pysabertooth import Sabertooth
 from geometry_msgs.msg import Twist
@@ -53,7 +52,7 @@ class SabertoothController(Node):
 
     def stop(self):
         if self.sabertooth_controller:
-            self.sabertooth_controller.stop_movement()
+            self.sabertooth_controller.stop_script()
             self.sabertooth_controller.close()
             self.sabertooth_controller = None
 
