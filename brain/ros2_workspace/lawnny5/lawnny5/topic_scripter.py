@@ -1,10 +1,10 @@
 import rclpy
 from rclpy.node import Node
-from ament_index_python.packages import get_package_share_directory
 import json
 from .lib.keyframe_interpreter.KeyframeInterpreter import KeyframeInterpreter
 from std_msgs.msg import String
 from rclpy_message_converter import message_converter
+import os
 
 DEFAULT_FRAME_RATE_IN_MS = 100
 
@@ -19,15 +19,13 @@ class TopicScripter(Node):
         self.frame_timer = None
         self.script_start_time = None
 
-        self.scripts_dir = get_package_share_directory('lawnny5') + '/moves'
+        self.scripts_dir = os.getenv("LAWNNY5_ASSETS") + "/moves"
 
         self.create_subscription(
             String,
-            'topic_script/play_by_name',
+            "topic_script/play/by_name",
             self.handle_play_script_by_name,
             1)
-
-        self.play_script_by_name("dance1")
 
     def __del__(self):
         self.stop_script()
@@ -70,8 +68,9 @@ class TopicScripter(Node):
             self.current_topic_publishers[topic_key] = self.create_publisher(type(msg), topic["topic"], 1)
 
         script_keyframes = script["keyframes"]
+        script_duration = self.current_script["duration"]
 
-        self.current_script_interpreter = KeyframeInterpreter(script_keyframes)
+        self.current_script_interpreter = KeyframeInterpreter(script_keyframes, script_duration)
 
         self.script_start_time = self.get_clock().now().nanoseconds
         framerate = script.get("framerate") or DEFAULT_FRAME_RATE_IN_MS

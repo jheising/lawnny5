@@ -1,10 +1,11 @@
 import { StyleSheet, View } from "react-native";
-import { Page, Themes, Field, Switch, ProgressCircle, Group, Dropdown, Button, Option, Text } from "odyssey-ui";
+import { Page, Themes, Field, Switch, ProgressCircle, Group, Dropdown, Button, Option, Text, BlinkAnimation } from "odyssey-ui";
 import { Joypad, JoystickPosition } from "./Joypad";
 import { useEffect, useRef, useState } from "react";
 import { UseROSDispatch } from "../hooks/useROS";
 import { Message, Topic } from "roslib";
 import { VideoDisplay } from "./VideoDisplay";
+import { ChatBox } from "./ChatBox";
 
 export interface ControllerProps {
     ros: UseROSDispatch;
@@ -17,6 +18,11 @@ const NAV_MODE_OPTIONS: NavModeOption[] = [
     { name: "FOLLOW ME", value: "FOLLOW_ME" }
 ];
 
+const VIEW_MODE_OPTIONS: Option[] = [
+    { name: "CHAT" },
+    { name: "CAM" }
+];
+
 export function Controller(props: ControllerProps) {
     const [joystickPosition, setJoystickPosition] = useState<JoystickPosition>();
 
@@ -24,6 +30,7 @@ export function Controller(props: ControllerProps) {
     const yPercent = Math.round((joystickPosition?.yPercent ?? 0) * 100);
 
     const [navMode, setNavMode] = useState<NavModeOption | undefined>();
+    const [viewMode, setViewMode] = useState<Option | undefined>(VIEW_MODE_OPTIONS[0]);
     const [forwardDirection, setForwardDirection] = useState(true);
     const joystickPublisher = useRef<Topic>();
 
@@ -78,12 +85,23 @@ export function Controller(props: ControllerProps) {
         }
     }
 
+    function renderViewMode() {
+        switch (viewMode?.name) {
+            case "CAM":
+                return props.ros.ros && <VideoDisplay style={{ flex: 1 }} ros={props.ros.ros} />;
+            default:
+                return props.ros.ros && <ChatBox style={{ flex: 1 }} ros={props.ros.ros} />;
+        }
+    }
+
     return <View style={{ minHeight: "100%", width: "100%", maxWidth: 1024, padding: 10, paddingBottom: 0 }}>
         <Page title="LNE5" description="VITA AG SYSTEMS L-SERIES MK5">
             <Group style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
-                <View style={{ flex: 1 }}>
-                    {props.ros.ros && <VideoDisplay style={{ flex: 1 }} ros={props.ros.ros} />}
-                </View>
+                <Text>VIEW MODE</Text>
+                <Dropdown placeholderText="NAV MD" value={viewMode} options={VIEW_MODE_OPTIONS} onChange={setViewMode} />
+                <BlinkAnimation style={{ flex: 1 }} key={viewMode?.name} animationDelay={0}>
+                    {renderViewMode()}
+                </BlinkAnimation>
                 <Group direction="vertical">
                     <Text>NAV MODE</Text>
                     <Dropdown placeholderText="NAV MD" value={navMode} options={NAV_MODE_OPTIONS} onChange={handleNavModeChange} />

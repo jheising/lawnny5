@@ -26,6 +26,8 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/Chat.msg"
+  "msg/ChatStreamingResponse.msg"
   "msg/ObjectTrack.msg"
   "srv/GetGlobalSetting.srv"
   "srv/GetGlobalSettings.srv"

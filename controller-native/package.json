@@ -8,7 +8,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "prepare-build": "rm -R ./",
-    "build:web": "rm -Rf ../brain/ros2_workspace/www && mkdir -p ../brain/ros2_workspace/www && npx expo export --platform web --output-dir ../brain/ros2_workspace/www"
+    "build:web": "rm -Rf ../brain/ros2_workspace/www && mkdir -p ../brain/assets/www && npx expo export --platform web --output-dir ../brain/assets/www"
   },
   "dependencies": {
     "@expo/metro-runtime": "~3.1.3",

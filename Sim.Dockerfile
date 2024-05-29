@@ -16,8 +16,9 @@ RUN mkdir -p /root/lawnny5/cache
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 
 ENV WEBOTS_SHARED_FOLDER=/Users/jheising/Documents/Development/personal/lawnny5/development/brain/ros2_workspace/shared:/root/lawnny5/src/shared
-ENV LAWNNY5_ROOT="/root/lawnny5/src"
+ENV LAWNNY5_ROOT="/root/lawnny5/ros2_workspace"
 ENV LAWNNY5_CACHE="/root/lawnny5/cache"
+ENV LAWNNY5_ASSETS="/root/lawnny5/assets"
 
 WORKDIR /root/lawnny5
 
@@ -30,11 +31,8 @@ RUN python3 -m pip install pysabertooth depthai==2.20.2 opencv-python pytweening
 
 # https://www.theconstruct.ai/ros2-how-to-install-third-party-python-packages-using-ros2-5/
 
-# sudo mount -t cifs //192.168.1.30/lawnny5 /home/lawnny5/src -o username=jimheising,sec=ntlmssp,nounix
-# docker run -d -i -t -v /home/debian/lawnny5/src:/root/lawnny5/src -v /home/lawnny5/cache:/root/lawnny5/cache -v /dev/bus/usb:/dev/bus/usb -v /run/dbus:/run/dbus --name lawnny5-ros-sim --rm --network host --device-cgroup-rule='c 189:* rmw' --privileged lawnny5-ros-sim:latest
-
 # sudo mount -t cifs //192.168.1.6/development /home/lawnny5/src -o username=jheising,sec=ntlmssp,nounix
-# docker run -d -i -t -v /home/lawnny5/src/brain/ros2_workspace:/root/lawnny5/src -v /home/lawnny5/cache:/root/lawnny5/cache -v /dev/bus/usb:/dev/bus/usb -v /run/dbus:/run/dbus --name lawnny5-ros-sim --rm --network host --device-cgroup-rule='c 189:* rmw' --privileged lawnny5-ros-sim:latest
+# docker run -d -i -t -v /home/lawnny5/src/brain/ros2_workspace:/root/lawnny5/ros2_workspace -v /home/lawnny5/cache:/root/lawnny5/cache -v /home/lawnny5/src/brain/assets:/root/lawnny5/assets -v /dev/bus/usb:/dev/bus/usb -v /run/dbus:/run/dbus --name lawnny5-ros-sim --rm --network host --device-cgroup-rule='c 189:* rmw' --privileged lawnny5-ros-sim:latest
 
 # RUN history -s colcon build && source install/local_setup.bash
 # RUN history -s ros2 launch lawnny5 robotulate_launch.yaml
@@ -48,3 +46,4 @@ RUN python3 -m pip install pysabertooth depthai==2.20.2 opencv-python pytweening
 # ros2 launch webots_ros2_universal_robot multirobot_launch.py
 
 # ros2 topic pub --once /personality/chat_input std_msgs/String "data: Hey there!"
+# ros2 topic pub --once sound/play/by_name std_msgs/String "data: alive1"

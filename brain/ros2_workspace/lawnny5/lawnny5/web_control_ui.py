@@ -8,7 +8,7 @@ DEFAULT_SERVER_PORT = 8000
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=(os.getenv('LAWNNY5_ROOT') + "/www"), **kwargs)
+        super().__init__(*args, directory=(os.getenv('LAWNNY5_ASSETS') + "/www"), **kwargs)
 
 class WebControlUI(Node):
 

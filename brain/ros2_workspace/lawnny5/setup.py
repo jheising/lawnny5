@@ -8,7 +8,7 @@ setup(
     name=package_name,
     version='0.0.0',
     packages=find_packages(exclude=['test']),
-    package_data={"": ["*.blob", "*.py.templ", "*.mp3", "*.json"]},
+    package_data={"": ["*.blob", "*.py.templ"]},
     include_package_data=True,
     data_files=[
         (os.path.join('share', package_name, 'config'), glob('config/*', recursive=True)),
@@ -18,8 +18,6 @@ setup(
         (os.path.join('lib', package_name, 'resource'), glob('resource/*', recursive=True)),
         (os.path.join('share', package_name, 'resource'), glob('resource/*', recursive=True)),
         (os.path.join('share', package_name, 'worlds'), glob('worlds/*', recursive=True)),
-        (os.path.join('share', package_name, 'sounds'), glob('sounds/*', recursive=True)),
-        (os.path.join('share', package_name, 'moves'), glob('moves/*', recursive=True)),
         (os.path.join('share', package_name, 'launch'), glob(os.path.join('launch', '*launch.[pxy][yma]*'))),
     ],
     install_requires=['setuptools'],

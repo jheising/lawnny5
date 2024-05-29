@@ -1,11 +1,8 @@
-import pytweening
-import copy
 import json
 
-# Convert something like 10% into 0.1
-def get_keyframe_key_value(key):
-    key = key.replace("%", "")
-    return float(key) / 100.0
+import pytweening
+import copy
+import uuid
 
 
 def is_number(value):
@@ -38,19 +35,13 @@ def tween_object_values(start_object, end_object, tween_function, tween_percenta
 
 
 def normalize_element(element, position_key_position):
-    normalized_element = {"position": position_key_position, "type": element[0], "msg": element[1]}
+    normalized_element = {"id": uuid.uuid4().hex, "position": position_key_position, "type": element[0], "msg": element[1]}
     if len(element) >= 3:
         normalized_element["tween"] = element[2]
     return normalized_element
 
 
-def interpolate_keyframe_element(from_element, to_element, percentage_done):
-    tween_type = to_element.get("tween")
-
-    # if there is no tween to, then there is no need to interpolate
-    if not tween_type:
-        return to_element
-
+def interpolate_keyframe_element(from_element, to_element, tween_type, percentage_done):
     from_percentage = from_element["position"]
     to_percentage = to_element["position"]
 
@@ -65,25 +56,46 @@ def interpolate_keyframe_element(from_element, to_element, percentage_done):
 
 
 class KeyframeInterpreter:
-    def __init__(self, keyframes):
+    def __init__(self, keyframes, total_duration):
 
         self.keyframes = copy.deepcopy(keyframes)
+        self.total_duration = total_duration
 
-        # Sort our keyframes into their proper order
-        self.keyframe_position_keys = sorted(map(lambda key: [key, get_keyframe_key_value(key)], keyframes.keys()), key=lambda value: value[1])
+        # Convert all of our keyframe position strings into percentages
+        current_position = 0
+        self.keyframe_positions = []
+        for keyframe in self.keyframes:
+
+            keyframe_position_string = keyframe[0]
+
+            if "%" in keyframe_position_string:
+                keyframe_position_value = float(keyframe_position_string.replace("%", "")) / 100.0
+            elif "+" in keyframe_position_string:
+                keyframe_position_value = (float(keyframe_position_string.replace("+", "")) / total_duration) + current_position
+            else:
+                keyframe_position_value = float(keyframe_position_string) / total_duration
+
+            current_position = keyframe_position_value
+            keyframe[0] = keyframe_position_value
+
+            self.keyframe_positions.append(keyframe_position_value)
+
+        self.keyframe_positions = sorted(self.keyframe_positions)
 
         self.normalized_keyframes = []
-        self.last_message_strings = []
+        self.once_element_ids = []
 
-        for position_key_info in self.keyframe_position_keys:
-            position_key = position_key_info[0]
-            position_key_position = position_key_info[1]
+        for keyframe_position in self.keyframe_positions:
+            elements = []
 
-            elements = self.keyframes[position_key]
-            normalized_elements = list(map(lambda element: normalize_element(element, position_key_position), elements))
+            for keyframe in self.keyframes:
+                if keyframe[0] == keyframe_position:
+                    elements = elements + keyframe[1:]
+
+            normalized_elements = list(map(lambda element: normalize_element(element, keyframe_position), elements))
 
             normalized_element_dict = {
-                "position": position_key_position,
+                "position": keyframe_position,
                 "elements": {}
             }
 
@@ -93,26 +105,14 @@ class KeyframeInterpreter:
             self.normalized_keyframes.append(normalized_element_dict)
 
     def restart(self):
-        self.last_message_strings = []
+        self.once_element_ids = []
 
     def play(self, percentage_done):
-        new_messages = self.get_messages_at_position(percentage_done)
+        elements = self._get_elements_at_position(percentage_done)
 
-        # Remove any messages that haven't changed since our last run through
-        new_message_strings = list(map(lambda msg: json.dumps(msg, sort_keys=True), new_messages))
+        return list(map(lambda element: {"type": element["type"], "msg": element["msg"]}, elements))
 
-        return_messages = []
-
-        for message_index in range(len(new_message_strings)):
-            new_message_string = new_message_strings[message_index]
-            if new_message_string not in self.last_message_strings:
-                return_messages.append(new_messages[message_index])
-
-        self.last_message_strings = new_message_strings
-
-        return return_messages
-
-    def get_messages_at_position(self, percentage_done):
+    def _get_elements_at_position(self, percentage_done):
         current_keyframe_element_state = {}
         prev_keyframe_element_state = {}
         return_elements = []
@@ -141,13 +141,26 @@ class KeyframeInterpreter:
 
         for to_element in current_keyframe_element_state.values():
             from_element = prev_keyframe_element_state.get(to_element["type"])
+            tween_type = to_element.get("tween")
 
             # If this element is transitioning from a previous element, we'll need to interpolate it
-            if from_element:
-                interpolated_element = interpolate_keyframe_element(from_element, to_element, percentage_done)
-                current_element = {"type": interpolated_element["type"], "msg": interpolated_element["msg"]}
+            if tween_type and from_element:
+                interpolated_element = interpolate_keyframe_element(from_element, to_element, tween_type, percentage_done)
+                current_element = interpolated_element
+            elif from_element and percentage_done < to_element["position"]:
+                current_element = from_element
+            elif not from_element and percentage_done < to_element["position"]:
+                continue
             else:
-                current_element = {"type": to_element["type"], "msg": to_element["msg"]}
+                current_element = to_element
+
+            if current_element.get("tween") == "once":
+                element_id = current_element["id"]
+                # If this once element has already been sent, then don't bother sending it again
+                if element_id in self.once_element_ids:
+                    continue
+                else:
+                    self.once_element_ids.append(element_id)
 
             return_elements.append(current_element)
 

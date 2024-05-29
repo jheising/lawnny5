@@ -22,11 +22,11 @@ export function CRTScreen(props: PropsWithChildren) {
         }));
     }, []);
 
-    return <View style={{ overflow: "hidden", flex: 1, backgroundColor: bootAnimationFinished ? theme.backgroundColor : "#000000", display: "flex", justifyContent: "center", alignItems: "center" }}>
-        {bootAnimationFinished ? props.children : <Animated.View style={[{ backgroundColor: theme.backgroundColor }, animationStyle]} />}
-    </View>;
-
-    // return <ScreenOverlay style={{overflow:"hidden"}} contentContainerStyle={{ flex: 1, backgroundColor: bootAnimationFinished ? theme.backgroundColor : "#000000", display: "flex", justifyContent: "center", alignItems: "center" }}>
+    // return <View style={{ overflow: "hidden", flex: 1, backgroundColor: bootAnimationFinished ? theme.backgroundColor : "#000000", display: "flex", justifyContent: "center", alignItems: "center" }}>
     //     {bootAnimationFinished ? props.children : <Animated.View style={[{ backgroundColor: theme.backgroundColor }, animationStyle]} />}
-    // </ScreenOverlay>;
+    // </View>;
+
+    return <ScreenOverlay style={{overflow:"hidden"}} contentContainerStyle={{ flex: 1, backgroundColor: bootAnimationFinished ? theme.backgroundColor : "#000000", display: "flex", justifyContent: "center", alignItems: "center" }}>
+        {bootAnimationFinished ? props.children : <Animated.View style={[{ backgroundColor: theme.backgroundColor }, animationStyle]} />}
+    </ScreenOverlay>;
 }

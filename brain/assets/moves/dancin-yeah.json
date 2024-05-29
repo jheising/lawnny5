@@ -1,0 +1,63 @@
+{
+  "topics": {
+    "cmd_vel": {
+      "topic": "cmd_vel",
+      "type": "geometry_msgs/msg/Twist"
+    },
+    "nav_mode": {
+      "topic": "nav_mode",
+      "type": "std_msgs/msg/String"
+    },
+    "play_sound": {
+      "topic": "sound/play/by_name",
+      "type": "std_msgs/msg/String"
+    }
+  },
+  "duration": 35000,
+  "framerate": 100,
+  "keyframes": [
+    ["0%",
+      ["nav_mode", {"data": "DIRECT"}, "once"]
+    ],
+    ["+1000",
+      ["cmd_vel", {"linear": {"x": 1.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": 0.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": -1.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": 0.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"angular": {"z": 3.0},"linear": {"x": 0.0}}]
+    ],
+    ["+1000",
+      ["cmd_vel",{"angular": {"z": 0.0}, "linear": {"x": 0.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": 1.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": 0.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": -1.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": 0.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"angular": {"z": 3.0},"linear": {"x": 0.0}}]
+    ],
+    ["+1000",
+      ["cmd_vel",{"angular": {"z": 0.0}, "linear": {"x": 0.0}}]
+    ],
+
+    ["+1",
+      ["cmd_vel",{"angular": {"z": 0.0}, "linear": {"x": 0.0}}]
+    ]
+  ]
+}
