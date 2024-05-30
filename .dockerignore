@@ -1,4 +1,5 @@
 controller/**/*
+controller-native/**/*
 .idea
 .git
 **/*/.git

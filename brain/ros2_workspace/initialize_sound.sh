@@ -1,27 +1,28 @@
 #!/bin/bash
 
-# Replace with your bluetooth device dongle ID
-#export BT_DEVICE="8C:88:0B:4A:27:A8"
-#export SPEAKER_DEVICE="12:11:CE:D4:E8:3A"
-
 set +H
-echo -e "pcm.btreceiver {
+echo -e "pcm.btspeak {
     type plug
     slave.pcm {
         type bluealsa
         device \"$AUDIO_DEVICE_ADDR\"
         profile \"a2dp\"
     }
-    hint {
-        show on
-        description \"Bluetooth Receiver\"
-    }
+}
+
+pcm.btmic {
+	type plug
+	slave.pcm {
+		type bluealsa
+		device \"$AUDIO_DEVICE_ADDR\"
+		profile \"sco\"
+	}
 }
 
 pcm.!default {
- type plug
-    slave.pcm \"btreceiver\"
-
+	type asym
+	capture.pcm \"btmic\"
+	playback.pcm \"btspeak\"
 }" > /etc/asound.conf
 set -H
 

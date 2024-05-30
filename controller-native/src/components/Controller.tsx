@@ -33,6 +33,7 @@ export function Controller(props: ControllerProps) {
     const [viewMode, setViewMode] = useState<Option | undefined>(VIEW_MODE_OPTIONS[0]);
     const [forwardDirection, setForwardDirection] = useState(true);
     const joystickPublisher = useRef<Topic>();
+    const navModePublisher = useRef<Topic>();
 
     useEffect(() => {
         if (props.ros.isConnected) {
@@ -42,6 +43,12 @@ export function Controller(props: ControllerProps) {
                 ros: props.ros.ros!,
                 name: "joy",
                 messageType: "sensor_msgs/Joy"
+            });
+
+            navModePublisher.current = new Topic({
+                ros: props.ros.ros!,
+                name: "nav_mode",
+                messageType: "std_msgs/String"
             });
 
             return props.ros.onSettingChange(handleSettingChange);
@@ -80,8 +87,11 @@ export function Controller(props: ControllerProps) {
     }
 
     function handleNavModeChange(option?: Option) {
-        if (option) {
-            props.ros.setSetting("nav-mode", option.value, true);
+        if (option && navModePublisher.current) {
+            navModePublisher.current?.publish(new Message({
+                data: option.value
+            }))
+            //props.ros.setSetting("nav-mode", option.value, true);
         }
     }
 

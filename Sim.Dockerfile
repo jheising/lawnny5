@@ -1,13 +1,12 @@
 FROM ros:humble-ros-base-jammy
 
-RUN sudo apt-get update -y # && sudo apt-get upgrade -y -f
+RUN sudo apt-get update -y && sudo apt-get upgrade -y -f
 RUN sudo apt-get install -y -f  \
     ros-humble-rosbridge-suite \
     ros-humble-rclpy-message-converter \
     python3-colcon-common-extensions \
     python3-pip \
-    bluetooth bluez-alsa-utils mpg123 # \
-    # ros-humble-webots-ros2 iproute2
+    bluetooth bluez-alsa-utils mpg123 mpv
 
 RUN mkdir -p /root/lawnny5/src
 RUN mkdir -p /root/lawnny5/cache
@@ -22,10 +21,8 @@ ENV LAWNNY5_ASSETS="/root/lawnny5/assets"
 
 WORKDIR /root/lawnny5
 
-#RUN virtualenv -p python3 ./.venv
-#RUN source ./.venv/bin/activate
 # We have to lock depthai to 2.20.2 because of this issue https://github.com/geaxgx/depthai_blazepose/issues/37
-RUN python3 -m pip install pysabertooth depthai==2.20.2 opencv-python pytweening mpyg321 openai requests python-benedict
+RUN python3 -m pip install pysabertooth depthai==2.20.2 opencv-python pytweening mpyg321 openai elevenlabs
 
 # RUN colcon build && source install/local_setup.bash
 

@@ -1,0 +1,25 @@
+{
+  "topics": {
+    "cmd_vel": {
+      "topic": "cmd_vel",
+      "type": "geometry_msgs/msg/Twist"
+    },
+    "nav_mode": {
+      "topic": "nav_mode",
+      "type": "std_msgs/msg/String"
+    }
+  },
+  "duration": 3000,
+  "framerate": 100,
+  "keyframes": [
+    ["0%",
+      ["nav_mode", {"data": "DIRECT"}, "once"]
+    ],
+    ["50%",
+      ["cmd_vel", {"angular": {"z": 5.0}}, "linear"]
+    ],
+    ["100%",
+      ["cmd_vel", {"angular": {"z": 0.0}}, "linear"]
+    ]
+  ]
+}

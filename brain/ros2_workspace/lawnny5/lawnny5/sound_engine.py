@@ -4,13 +4,13 @@ import subprocess, os, time
 from std_msgs.msg import String
 import re
 import hashlib
-import tempfile
-import requests
-import copy
 import json
+from elevenlabs.client import ElevenLabs
+from elevenlabs import Voice, stream, save
 
+BT_ADAPTER_ADDR = os.environ.get("BT_ADAPTER_ADDR") or "8C:88:0B:4A:27:A8"
+BT_SPEAKER_ADDR = os.environ.get("BT_SPEAKER_ADDR") or "12:11:CE:D4:E8:3A"  # SONY: "6C:47:60:9B:98:F5"
 ELEVEN_LABS_API_KEY = os.environ.get("ELEVEN_LABS_API_KEY")
-TTS_CHUNK_SIZE = 1024
 SPEECH_VOICE_ID = "xt0y2vcn6RmawK03ZEfJ"
 SPEECH_SETTINGS = {
     "model_id": "eleven_multilingual_v2",
@@ -22,16 +22,26 @@ SPEECH_SETTINGS = {
     }
 }
 
+el_voice = Voice(
+    voice_id=SPEECH_VOICE_ID,
+    settings=SPEECH_SETTINGS["voice_settings"]
+)
+
+el_client = ElevenLabs(
+    api_key=ELEVEN_LABS_API_KEY
+)
+
+
 class SoundEngine(Node):
 
     def __init__(self):
         super().__init__('sound_engine')
 
-        self.bt_adapter_addr = '8C:88:0B:4A:27:A8'
-        # self.bt_speaker_addr = '12:11:CE:D4:E8:3A' # Hummingbird
-        self.bt_speaker_addr = "6C:47:60:9B:98:F5" # Sony
+        self.bt_adapter_addr = BT_ADAPTER_ADDR
+        self.bt_speaker_addr = BT_SPEAKER_ADDR
         self.mp3_player = None
         self.bt_sound_system_proc = None
+        self.sound_system_ready = False
 
         self.speech_settings_hash = hashlib.md5(json.dumps(SPEECH_SETTINGS, sort_keys=True).encode()).hexdigest()
 
@@ -69,67 +79,52 @@ class SoundEngine(Node):
     def play_sound_by_name(self, name):
         self.play_sound_file(self.premade_sound_dir + "/" + name + '.mp3')
 
-    def speak_text(self, speech, use_cache=True):
+    def speak_text(self, speech):
 
-        text_fingerprint = hashlib.md5((re.sub(r'[^A-Za-z0-9]', '', speech).lower() + self.speech_settings_hash).encode()).hexdigest()
-
-        if use_cache:
-            # Remove all non-alphanumeric chars, lowercase, and md5 hash it to generate a hash key for the text
-            filename = self.sound_cache_dir + text_fingerprint + ".mp3"
-
-            if os.path.exists(filename):
-                self.play_sound_file(filename)
-                return
-
-        else:
-            filename = tempfile.gettempdir() + "/" + text_fingerprint + ".mp3"
+        if not self.sound_system_ready:
+            self.get_logger().error("Sound system not ready to play speech.")
+            return
 
         status_msg = String()
         status_msg.data = "generating_speech"
         self.sound_status_publisher.publish(status_msg)
 
-        self.generate_tts_file(speech, filename)
+        # self.generate_tts_file(speech)
+        audio = el_client.generate(
+            text=speech,
+            voice=el_voice,
+            model=SPEECH_SETTINGS["model_id"],
+            stream=True
+        )
+
+        stream(audio)
 
         status_msg.data = "speech_generated"
         self.sound_status_publisher.publish(status_msg)
 
-        self.play_sound_file(filename)
-
-        if not use_cache:
-            os.remove(filename)
-
-    def generate_tts_file(self, speech, filename):
-        url = "https://api.elevenlabs.io/v1/text-to-speech/%s?output_format=mp3_22050_32" % SPEECH_VOICE_ID
-
-        headers = {
-            "Accept": "audio/mpeg",
-            "Content-Type": "application/json",
-            "xi-api-key": ELEVEN_LABS_API_KEY
-        }
-
-        data = copy.copy(SPEECH_SETTINGS)
-        data["text"] = speech
-
-        response = requests.post(url, json=data, headers=headers)
-
-        if response.status_code >= 300:
-            response.raise_for_status()
-
-        with open(filename, "wb") as f:
-            for chunk in response.iter_content(chunk_size=TTS_CHUNK_SIZE):
-                if chunk:
-                    f.write(chunk)
+    # def generate_tts_file(self, speech):
+    #     audio = el_client.generate(
+    #         text=speech,
+    #         voice=el_voice,
+    #         model=SPEECH_SETTINGS["model_id"],
+    #         stream=True
+    #     )
+    #
+    #     stream(audio)
 
     def play_sound_file(self, file):
         self.get_logger().info("Playing sound: %s" % file)
         status_msg = String()
         status_msg.data = "playing"
         self.sound_status_publisher.publish(status_msg)
-        subprocess.run(['mpg123', file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # subprocess.run(['mpg123', file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(["mpv", "--no-cache", "--no-terminal", file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         status_msg.data = "stopped"
         self.sound_status_publisher.publish(status_msg)
 
     def disconnect_bluetooth_speaker(self, audio_device_addr):
+        self.sound_system_ready = False
+
         subprocess.run(['bluetoothctl', 'disconnect', audio_device_addr])
 
         if self.bt_sound_system_proc:
@@ -155,6 +150,11 @@ class SoundEngine(Node):
         subprocess.run(['bluetoothctl', 'pair', audio_device_addr])
         subprocess.run(['bluetoothctl', 'trust', audio_device_addr])
         subprocess.run(['bluetoothctl', 'connect', audio_device_addr])
+
+        status_msg = String()
+        status_msg.data = "audio_system_ready"
+        self.sound_status_publisher.publish(status_msg)
+        self.sound_system_ready = True
 
 
 def main(args=None):

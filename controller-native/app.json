@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "controller-native",
-    "slug": "controller-native",
+    "name": "Lawnny 5 Controller",
+    "slug": "lawnny-5-controller",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#000000"
+      "backgroundColor": "#1B3B5C"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -20,12 +20,12 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#000000"
+        "backgroundColor": "#1B3B5C"
       }
     },
     "web": {
       "output": "single",
-      "title": "LNE5",
+      "title": "Lawnny 5 Controller",
       "favicon": "./assets/favicon.png"
     }
   }

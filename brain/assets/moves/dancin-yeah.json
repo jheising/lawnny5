@@ -17,7 +17,8 @@
   "framerate": 100,
   "keyframes": [
     ["0%",
-      ["nav_mode", {"data": "DIRECT"}, "once"]
+      ["nav_mode", {"data": "DIRECT"}, "once"],
+      ["play_sound", {"data": "dancin-yeah"}, "once"]
     ],
     ["+1000",
       ["cmd_vel", {"linear": {"x": 1.0}}]
@@ -50,14 +51,97 @@
       ["cmd_vel", {"linear": {"x": 0.0}}]
     ],
     ["+250",
+      ["cmd_vel", {"angular": {"z": -3.0},"linear": {"x": 0.0}}]
+    ],
+    ["+1000",
+      ["cmd_vel",{"angular": {"z": 0.0}, "linear": {"x": 0.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": 1.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": 0.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": -1.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": 0.0}}]
+    ],
+    ["+250",
       ["cmd_vel", {"angular": {"z": 3.0},"linear": {"x": 0.0}}]
     ],
     ["+1000",
       ["cmd_vel",{"angular": {"z": 0.0}, "linear": {"x": 0.0}}]
     ],
-
-    ["+1",
+    ["+250",
+      ["cmd_vel", {"linear": {"x": 1.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": 0.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": -1.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": 0.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"angular": {"z": -3.0},"linear": {"x": 0.0}}]
+    ],
+    ["+1000",
       ["cmd_vel",{"angular": {"z": 0.0}, "linear": {"x": 0.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": 1.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": 0.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": -1.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": 0.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"angular": {"z": 3.0},"linear": {"x": 0.0}}]
+    ],
+    ["+1000",
+      ["cmd_vel",{"angular": {"z": 0.0}, "linear": {"x": 0.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": 1.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": 0.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": -1.0}}]
+    ],
+    ["+250",
+      ["cmd_vel", {"linear": {"x": 0.0}}]
+    ],
+    ["+250",
+      ["cmd_vel",{"angular": {"z": 3.0}}]
+    ],
+    ["+6000",
+      ["cmd_vel",{"angular": {"z": 0.0}}]
+    ],
+    ["+250",
+      ["cmd_vel",{"angular": {"z": 3.0}, "linear": {"x": 1.0}}]
+    ],
+    ["+4000",
+      ["cmd_vel",{"angular": {"z": 4.0}, "linear": {"x": 0.0}}]
+    ],
+    ["+4000",
+      ["cmd_vel",{"angular": {"z": 2.0}, "linear": {"x": 1.0}}]
+    ],
+    ["+4000",
+      ["cmd_vel",{"angular": {"z": 4.0}, "linear": {"x": 0.0}}]
+    ],
+    ["100%",
+      ["cmd_vel",{"angular": {"z": 0.0}, "linear": {"x": 0.0}}, "easeOutQuart"]
     ]
   ]
 }

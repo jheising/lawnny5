@@ -52,7 +52,8 @@ export function ChatBox(props: ChatBoxProps) {
         if (chatPublisher.current) {
             chatPublisher.current.publish(new Message({
                 data: chatInputText,
-                generate_tts: false
+                generate_tts: true,
+                allow_movement: true
             }));
         }
     }
