@@ -1,0 +1,45 @@
+{
+  "topics": {
+    "nav_mode": {
+      "topic": "nav_mode",
+      "type": "std_msgs/msg/String"
+    },
+    "chat_input": {
+      "topic": "personality/chat/input",
+      "type": "lawnny5_interfaces/msg/Chat"
+    }
+  },
+  "duration": 60000,
+  "framerate": 1000,
+  "keyframes": [
+    [
+      "0%",
+      [
+        "nav_mode",
+        {
+          "data": "FOLLOW_ME"
+        },
+        "once"
+      ]
+    ],
+    [
+      "100%",
+      [
+        "nav_mode",
+        {
+          "data": "DIRECT"
+        },
+        "once"
+      ],
+      [
+        "chat_input",
+        {
+          "data": "Tell me you are bored following my finger and are waiting for something else to do.",
+          "generate_tts": true,
+          "allow_movement": false
+        },
+        "once"
+      ]
+    ]
+  ]
+}

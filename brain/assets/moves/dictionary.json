@@ -1,0 +1,36 @@
+[
+  {
+    "keywords": [
+      "circle",
+      "twirl",
+      "around",
+      "pirouette",
+      "spin",
+      "turning"
+    ],
+    "moves": [
+      "pirouette"
+    ]
+  },
+  {
+    "keywords": [
+      "disco",
+      "dance",
+      "jig",
+      "dancing"
+    ],
+    "moves": [
+      "dancin-yeah"
+    ]
+  },
+  {
+    "keywords": [
+      "follow",
+      "following",
+      "finger"
+    ],
+    "moves": [
+      "follow-me"
+    ]
+  }
+]

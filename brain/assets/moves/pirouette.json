@@ -13,13 +13,14 @@
   "framerate": 100,
   "keyframes": [
     ["0%",
-      ["nav_mode", {"data": "DIRECT"}, "once"]
+      ["nav_mode", {"data": "DIRECT"}, "once"],
+      ["cmd_vel", {"angular": {"z": 0.0}}]
     ],
     ["50%",
-      ["cmd_vel", {"angular": {"z": 5.0}}, "linear"]
+      ["cmd_vel", {"angular": {"z": 5.0}}, "easeInQuad"]
     ],
     ["100%",
-      ["cmd_vel", {"angular": {"z": 0.0}}, "linear"]
+      ["cmd_vel", {"angular": {"z": 0.0}}, "easeOutQuad"]
     ]
   ]
 }

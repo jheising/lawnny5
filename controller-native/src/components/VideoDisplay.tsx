@@ -1,12 +1,13 @@
 import { Message, Ros, Topic } from "roslib";
 import { useEffect, useRef, useState } from "react";
-import { Image, StyleProp, View, ViewProps } from "react-native";
+import { Image, StyleProp, View } from "react-native";
 import { useInterval } from "odyssey-ui/dist/hooks/useInterval";
-import { BlinkAnimation, Box, Subtitle, Text, useTheme } from "odyssey-ui";
+import { BlinkAnimation, Box, Text, useTheme } from "odyssey-ui";
+import { ViewStyle } from "react-native/Libraries/StyleSheet/StyleSheetTypes";
 
 export interface VideoDisplayProps {
     ros: Ros;
-    style?: StyleProp<ViewProps>;
+    style?: StyleProp<ViewStyle>;
 }
 
 interface HandTrackingMessage {

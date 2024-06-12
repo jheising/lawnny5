@@ -5,6 +5,7 @@ import { useROS } from "./src/hooks/useROS";
 import { LoadingScreen } from "./src/components/LoadingScreen";
 import { CRTScreen } from "./src/components/CRTScreen";
 import { Controller } from "./src/components/Controller";
+import { KioskController } from "./src/components/Kiosk/KioskController";
 
 const MyTheme = Themes.Slate;
 
@@ -23,16 +24,14 @@ export default function App() {
         // Automatically connect to the ROS server running on this device when the page loads
         //setROSURL(`ws://${document.location.hostname}:${DEFAULT_ROS_PORT}`);
         //setROSURL(`ws://debian.local:${DEFAULT_ROS_PORT}`);
-        setROSURL(`ws://lawnny5.local:${DEFAULT_ROS_PORT}`)
+        setROSURL(`ws://lawnny5.local:${DEFAULT_ROS_PORT}`);
     }, []);
 
     return (<Theme theme={{
         ...MyTheme,
         scale: height >= 1024 ? 2.5 : 2.0
     }}>
-        <CRTScreen>
-            {ros.isConnected ? <Controller ros={ros} /> : <LoadingScreen />}
-        </CRTScreen>
+        <KioskController ros={ros} />
     </Theme>);
 }
 

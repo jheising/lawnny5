@@ -114,7 +114,7 @@ class FollowMeTracker(Node):
 
         if self.cmd_vel_publisher:
             self.cmd_vel_publisher.publish(self.twist_cmd)
-        
+
     def process_hand_recognition(self, msg):
 
         now = self.get_clock().now().nanoseconds
@@ -145,7 +145,7 @@ class FollowMeTracker(Node):
                     angular_velocity = angular_velocity * ramp_multiplier
 
         self.twist_cmd.angular.z = angular_velocity
-        self.twist_cmd.linear.x = 0.0 #linear_velocity
+        self.twist_cmd.linear.x = 0.0  # linear_velocity
 
     def hand_recognized(self, event):
         if event.hand.gesture == "ONE":

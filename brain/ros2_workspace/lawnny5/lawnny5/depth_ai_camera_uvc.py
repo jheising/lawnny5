@@ -12,6 +12,7 @@ class DepthAICameraUVC(Node):
     def start(self):
         self.get_logger().info("Starting DepthAI as UVC Device...")
         self.device = dai.Device(self.get_pipeline())
+        self.get_logger().info("DepthAI as UVC Device Started.")
 
     def stop(self):
         self.get_logger().info("Stopping DepthAI as UVC Device...")
@@ -44,7 +45,7 @@ class DepthAICameraUVC(Node):
         # it is important to pass the device config separately when creating the device
         config = dai.Device.Config()
         # config.board.uvc = dai.BoardConfig.UVC()  # enable default 1920x1080 NV12
-        config.board.uvc = dai.BoardConfig.UVC(1920, 1080)
+        config.board.uvc = dai.BoardConfig.UVC(1280, 720)
         config.board.uvc.frameType = dai.ImgFrame.Type.NV12
         # config.board.uvc.cameraName = "My Custom Cam"
         pipeline.setBoardConfig(config.board)
@@ -62,7 +63,6 @@ def main(args=None):
     finally:
         node.stop()
         node.destroy_node()
-        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()

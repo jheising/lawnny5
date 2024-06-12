@@ -1,12 +1,13 @@
 import { Message, Ros, Topic } from "roslib";
-import { StyleProp, View, ViewProps, TextInput, NativeSyntheticEvent, TextInputKeyPressEventData } from "react-native";
+import { StyleProp, View, TextInput, NativeSyntheticEvent, TextInputKeyPressEventData } from "react-native";
 import { Text, Chip, Group, Subtitle, useTheme } from "odyssey-ui";
 import { useEffect, useRef, useState } from "react";
 import { useTypewriterEffect } from "../hooks/useTypewriterEffect";
+import { ViewStyle } from "react-native/Libraries/StyleSheet/StyleSheetTypes";
 
 export interface ChatBoxProps {
     ros: Ros;
-    style?: StyleProp<ViewProps>;
+    style?: StyleProp<ViewStyle>;
 }
 
 export function ChatBox(props: ChatBoxProps) {
@@ -69,6 +70,7 @@ export function ChatBox(props: ChatBoxProps) {
                            autoFocus
                            placeholder="INPUT..."
                            placeholderTextColor={"#FFFFFF50"}
+                            // @ts-ignore
                            style={{ flex: 1, fontFamily: "odyssey", color: theme.color, fontSize: theme.fontSize, outline: "none", textTransform: "uppercase" }}
                            value={chatInputText}
                            onChangeText={setChatInputText}

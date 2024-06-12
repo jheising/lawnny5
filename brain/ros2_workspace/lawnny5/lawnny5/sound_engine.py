@@ -2,14 +2,13 @@ import rclpy
 from rclpy.node import Node
 import subprocess, os, time
 from std_msgs.msg import String
-import re
 import hashlib
 import json
 from elevenlabs.client import ElevenLabs
 from elevenlabs import Voice, stream, save
 
 BT_ADAPTER_ADDR = os.environ.get("BT_ADAPTER_ADDR") or "8C:88:0B:4A:27:A8"
-BT_SPEAKER_ADDR = os.environ.get("BT_SPEAKER_ADDR") or "12:11:CE:D4:E8:3A"  # SONY: "6C:47:60:9B:98:F5"
+BT_SPEAKER_ADDR = os.environ.get("BT_SPEAKER_ADDR") or "6C:47:60:9B:98:F5" #  "12:11:CE:D4:E8:3A"  # SONY: "6C:47:60:9B:98:F5"
 ELEVEN_LABS_API_KEY = os.environ.get("ELEVEN_LABS_API_KEY")
 SPEECH_VOICE_ID = "xt0y2vcn6RmawK03ZEfJ"
 SPEECH_SETTINGS = {

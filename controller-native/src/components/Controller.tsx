@@ -6,6 +6,8 @@ import { UseROSDispatch } from "../hooks/useROS";
 import { Message, Topic } from "roslib";
 import { VideoDisplay } from "./VideoDisplay";
 import { ChatBox } from "./ChatBox";
+import { CRTScreen } from "./CRTScreen";
+import { LoadingScreen } from "./LoadingScreen";
 
 export interface ControllerProps {
     ros: UseROSDispatch;
@@ -90,7 +92,7 @@ export function Controller(props: ControllerProps) {
         if (option && navModePublisher.current) {
             navModePublisher.current?.publish(new Message({
                 data: option.value
-            }))
+            }));
             //props.ros.setSetting("nav-mode", option.value, true);
         }
     }
@@ -104,45 +106,56 @@ export function Controller(props: ControllerProps) {
         }
     }
 
-    return <View style={{ minHeight: "100%", width: "100%", maxWidth: 1024, padding: 10, paddingBottom: 0 }}>
-        <Page title="LNE5" description="VITA AG SYSTEMS L-SERIES MK5">
-            <Group style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
-                <Text>VIEW MODE</Text>
-                <Dropdown placeholderText="NAV MD" value={viewMode} options={VIEW_MODE_OPTIONS} onChange={setViewMode} />
-                <BlinkAnimation style={{ flex: 1 }} key={viewMode?.name} animationDelay={0}>
-                    {renderViewMode()}
-                </BlinkAnimation>
-                <Group direction="vertical">
-                    <Text>NAV MODE</Text>
-                    <Dropdown placeholderText="NAV MD" value={navMode} options={NAV_MODE_OPTIONS} onChange={handleNavModeChange} />
-                    <Text>DIRECTION</Text>
-                    <Switch offTitle="REV" onTitle="FWD" value={forwardDirection} onChange={setForwardDirection} />
-                    <Field label="JOYPAD">
-                        <View style={{ height: 200 }}>
-                            <Joypad style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} onMove={handleJoystickMove} />
-                            {/*<Animated.View style={[{*/}
-                            {/*    position: "absolute",*/}
-                            {/*    backgroundColor: Themes.Slate.primaryColor,*/}
-                            {/*    height: MyTheme.scale * 2*/}
-                            {/*}, joystickXAnimation]} />*/}
-                            {/*<Animated.View style={[{*/}
-                            {/*    position: "absolute",*/}
-                            {/*    backgroundColor: Themes.Slate.primaryColor,*/}
-                            {/*    width: MyTheme.scale * 2*/}
-                            {/*}, joystickYAnimation]} />*/}
-                            <View style={{ position: "absolute", bottom: 0, right: 0, pointerEvents: "none" }}>
-                                <Group direction="horizontal">
-                                    <ProgressCircle title="ANG-V" style="center" colorVariant={xPercent >= 0 ? "primary" : "warn"} fill={Math.abs(xPercent)} displayValue={xPercent + "%"} animate={false} />
-                                    <ProgressCircle title="LIN-V" style="center" colorVariant={yPercent >= 0 ? "primary" : "warn"} fill={Math.abs(yPercent)} displayValue={yPercent + "%"} animate={false} />
-                                </Group>
+    function renderContent() {
+
+        if (!props.ros || !props.ros.isConnected) {
+            return <LoadingScreen />;
+        }
+
+        return <View style={{ minHeight: "100%", width: "100%", maxWidth: 1024, padding: 10, paddingBottom: 0 }}>
+            <Page title="LNE5" description="VITA AG SYSTEMS L-SERIES MK5">
+                <Group style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
+                    <Text>VIEW MODE</Text>
+                    <Dropdown placeholderText="NAV MD" value={viewMode} options={VIEW_MODE_OPTIONS} onChange={setViewMode} />
+                    <BlinkAnimation style={{ flex: 1 }} key={viewMode?.name} animationDelay={0}>
+                        {renderViewMode()}
+                    </BlinkAnimation>
+                    <Group direction="vertical">
+                        <Text>NAV MODE</Text>
+                        <Dropdown placeholderText="NAV MD" value={navMode} options={NAV_MODE_OPTIONS} onChange={handleNavModeChange} />
+                        <Text>DIRECTION</Text>
+                        <Switch offTitle="REV" onTitle="FWD" value={forwardDirection} onChange={setForwardDirection} />
+                        <Field label="JOYPAD">
+                            <View style={{ height: 200 }}>
+                                <Joypad style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} onMove={handleJoystickMove} />
+                                {/*<Animated.View style={[{*/}
+                                {/*    position: "absolute",*/}
+                                {/*    backgroundColor: Themes.Slate.primaryColor,*/}
+                                {/*    height: MyTheme.scale * 2*/}
+                                {/*}, joystickXAnimation]} />*/}
+                                {/*<Animated.View style={[{*/}
+                                {/*    position: "absolute",*/}
+                                {/*    backgroundColor: Themes.Slate.primaryColor,*/}
+                                {/*    width: MyTheme.scale * 2*/}
+                                {/*}, joystickYAnimation]} />*/}
+                                <View style={{ position: "absolute", bottom: 0, right: 0, pointerEvents: "none" }}>
+                                    <Group direction="horizontal">
+                                        <ProgressCircle title="ANG-V" style="center" colorVariant={xPercent >= 0 ? "primary" : "warn"} fill={Math.abs(xPercent)} displayValue={xPercent + "%"} animate={false} />
+                                        <ProgressCircle title="LIN-V" style="center" colorVariant={yPercent >= 0 ? "primary" : "warn"} fill={Math.abs(yPercent)} displayValue={yPercent + "%"} animate={false} />
+                                    </Group>
+                                </View>
                             </View>
-                        </View>
-                    </Field>
-                    {/*<Button title="ESTOP" colorVariant="warn" />*/}
+                        </Field>
+                        {/*<Button title="ESTOP" colorVariant="warn" />*/}
+                    </Group>
                 </Group>
-            </Group>
-        </Page>
-    </View>;
+            </Page>
+        </View>;
+    }
+
+    return <CRTScreen>
+        {renderContent()}
+    </CRTScreen>;
 }
 
 const styles = StyleSheet.create({

@@ -144,7 +144,7 @@ class KeyframeInterpreter:
             tween_type = to_element.get("tween")
 
             # If this element is transitioning from a previous element, we'll need to interpolate it
-            if tween_type and from_element:
+            if tween_type and tween_type != "once" and from_element:
                 interpolated_element = interpolate_keyframe_element(from_element, to_element, tween_type, percentage_done)
                 current_element = interpolated_element
             elif from_element and percentage_done < to_element["position"]:

@@ -37,9 +37,9 @@ class TopicScripter(Node):
         self.play_script_file(self.scripts_dir + "/" + move_name + ".json")
 
     def play_script_file(self, filename):
-        file_data = open(filename)
-        move_data = json.load(file_data)
-        self.play_script(move_data)
+        with open(filename) as file_data:
+            move_data = json.load(file_data)
+            self.play_script(move_data)
 
     def stop_script(self):
 
