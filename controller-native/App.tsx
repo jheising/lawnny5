@@ -21,10 +21,17 @@ export default function App() {
     });
 
     useEffect(() => {
-        // Automatically connect to the ROS server running on this device when the page loads
-        //setROSURL(`ws://${document.location.hostname}:${DEFAULT_ROS_PORT}`);
-        //setROSURL(`ws://debian.local:${DEFAULT_ROS_PORT}`);
-        setROSURL(`ws://lawnny5.local:${DEFAULT_ROS_PORT}`);
+
+        let rosURL = `ws://${document.location.hostname}:${DEFAULT_ROS_PORT}`;
+        const params = new URLSearchParams(window.location.search);
+
+        const rosHost = (params.get("ros-host"));
+
+        if (rosHost) {
+            rosURL = `ws://${rosHost}:${DEFAULT_ROS_PORT}`;
+        }
+
+        setROSURL(rosURL);
     }, []);
 
     return (<Theme theme={{

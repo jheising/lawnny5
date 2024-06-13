@@ -8,13 +8,8 @@ RUN sudo apt-get install -y -f  \
     python3-pip \
     bluetooth bluez-alsa-utils mpg123 mpv
 
-RUN mkdir -p /root/lawnny5/src
 RUN mkdir -p /root/lawnny5/cache
 
-## Make sure ROS is always setup when loading our shell
-RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
-
-ENV WEBOTS_SHARED_FOLDER=/Users/jheising/Documents/Development/personal/lawnny5/development/brain/ros2_workspace/shared:/root/lawnny5/src/shared
 ENV LAWNNY5_ROOT="/root/lawnny5/ros2_workspace"
 ENV LAWNNY5_CACHE="/root/lawnny5/cache"
 ENV LAWNNY5_ASSETS="/root/lawnny5/assets"
@@ -28,6 +23,6 @@ COPY ./brain/assets /root/lawnny5/assets
 
 RUN . /opt/ros/humble/setup.sh && colcon build
 
-CMD . install/local_setup.sh && ros2 launch lawnny5 robotulate_launch.yaml
+CMD . /opt/ros/humble/setup.sh && . install/local_setup.sh && ros2 launch lawnny5 robotulate_launch.yaml
 
 # docker run -d -i -t -v /home/lawnny5/cache:/root/lawnny5/cache -v /dev/bus/usb:/dev/bus/usb -v /run/dbus:/run/dbus --name lawnny5-ros --rm --network host --device-cgroup-rule='c 189:* rmw' --privileged -e OPENAI_API_KEY=... -e ELEVEN_LABS_API_KEY=... -e DEEPGRAM_API_KEY=... lawnny5-ros:latest
