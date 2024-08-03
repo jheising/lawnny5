@@ -1,0 +1,2 @@
+#!/bin/sh
+docker run -d -i -t -v /home/lawnny/src/brain/ros2_workspace:/root/lawnny5/ros2_workspace -v /home/lawnny/cache:/root/lawnny5/cache -v /home/lawnny/src/brain/assets:/root/lawnny5/assets -v /dev/bus/usb:/dev/bus/usb -v /run/dbus:/run/dbus --name lawnny5-ros-sim --rm --network host --device-cgroup-rule='c 189:* rmw' --privileged lawnny5-ros-sim:latest

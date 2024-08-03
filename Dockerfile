@@ -16,13 +16,15 @@ ENV LAWNNY5_ASSETS="/root/lawnny5/assets"
 
 WORKDIR /root/lawnny5
 
-RUN python3 -m pip install pysabertooth depthai==2.20.2 opencv-python pytweening mpyg321 openai elevenlabs
+RUN python3 -m pip install pysabertooth depthai==2.20.2 opencv-python pytweening mpyg321 openai elevenlabs mavproxy
 
-COPY ./brain/ros2_workspace /root/lawnny5/ros2_workspace
-COPY ./brain/assets /root/lawnny5/assets
+# CMD ["sudo", "mavproxy.py", "--master=/dev/ttyAMA0", "--out=udpin:0.0.0.0:14550", "--daemon"]
 
-RUN . /opt/ros/humble/setup.sh && colcon build
+#COPY ./brain/ros2_workspace /root/lawnny5/ros2_workspace
+#COPY ./brain/assets /root/lawnny5/assets
 
-CMD . /opt/ros/humble/setup.sh && . install/local_setup.sh && ros2 launch lawnny5 robotulate_launch.yaml
+#RUN . /opt/ros/humble/setup.sh && colcon build
+
+#CMD . /opt/ros/humble/setup.sh && . install/local_setup.sh && ros2 launch lawnny5 robotulate_launch.yaml
 
 # docker run -d -i -t -v /home/lawnny5/cache:/root/lawnny5/cache -v /dev/bus/usb:/dev/bus/usb -v /run/dbus:/run/dbus --name lawnny5-ros --rm --network host --device-cgroup-rule='c 189:* rmw' --privileged -e OPENAI_API_KEY=... -e ELEVEN_LABS_API_KEY=... -e DEEPGRAM_API_KEY=... lawnny5-ros:latest

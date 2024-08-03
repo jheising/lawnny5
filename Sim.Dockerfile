@@ -21,13 +21,15 @@ ENV LAWNNY5_ASSETS="/root/lawnny5/assets"
 WORKDIR /root/lawnny5
 
 # We have to lock depthai to 2.20.2 because of this issue https://github.com/geaxgx/depthai_blazepose/issues/37
-RUN python3 -m pip install pysabertooth depthai==2.20.2 opencv-python pytweening mpyg321 openai elevenlabs
+RUN python3 -m pip install pysabertooth depthai==2.20.2 opencv-python pytweening mpyg321 openai elevenlabs mavproxy
+
+# sudo mavproxy.py --master=/dev/ttyAMA0 --baudrate 921600
 
 # RUN colcon build && source install/local_setup.bash
 
 # https://www.theconstruct.ai/ros2-how-to-install-third-party-python-packages-using-ros2-5/
 
-# sudo mount -t cifs //192.168.1.6/development /home/lawnny5/src -o username=jheising,sec=ntlmssp,nounix
+# sudo mount -t cifs //192.168.1.30/development /home/lawnny5/src -o username=jheising,sec=ntlmssp,nounix
 # sudo systemctl disable bluetooth.service
 # docker run -d -i -t -v /home/lawnny5/src/brain/ros2_workspace:/root/lawnny5/ros2_workspace -v /home/lawnny5/cache:/root/lawnny5/cache -v /home/lawnny5/src/brain/assets:/root/lawnny5/assets -v /dev/bus/usb:/dev/bus/usb -v /run/dbus:/run/dbus --name lawnny5-ros-sim --rm --network host --device-cgroup-rule='c 189:* rmw' --privileged lawnny5-ros-sim:latest
 
