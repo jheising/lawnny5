@@ -1,0 +1,7 @@
+module load ntrip
+ntrip set caster rtkbase.local
+ntrip set port 2101
+ntrip set mountpoint home
+ntrip set username lawnny
+ntrip set password NeedMowInput
+ntrip start
