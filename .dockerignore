@@ -3,3 +3,4 @@ controller-native/**/*
 .idea
 .git
 **/*/.git
+**/node_modules

@@ -25,7 +25,7 @@ Create terminal into running container
 `docker exec -it 56218417f957a86ecb9497fc252b1e9239023ebda1af49a5d72ac50178aa153a bash`
 
 # Start wireless AP
-sudo nmcli device wifi hotspot ssid lawnny5 password needmoreinput ifname wlan0
+sudo nmcli device wifi hotspot ssid lawnny password NeedMowInput ifname wlan0
 
 ### Stop
 sudo nmcli device disconnect wlan0 && sudo nmcli device up wlan0

@@ -5,3 +5,6 @@ ntrip set mountpoint home
 ntrip set username lawnny
 ntrip set password NeedMowInput
 ntrip start
+
+module load ws
+ws start

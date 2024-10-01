@@ -8,6 +8,8 @@
       <excludeFolder url="file://$MODULE_DIR$/brain/ros2_workspace/log" />
       <excludeFolder url="file://$MODULE_DIR$/controller/web-ui/.parcel-cache" />
       <excludeFolder url="file://$MODULE_DIR$/controller/web-ui/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/brain/MAVProxy/build" />
+      <excludeFolder url="file://$MODULE_DIR$/brain/MAVProxy/dist" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
